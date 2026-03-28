@@ -7,6 +7,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/gitbrent/PptxGenJS@3.12.0/dist/pptxgen.bundle.js"></script>
 <style>
 :root {
   --ink:#0d1a0f;--ink2:#162418;--forest:#2d6a4f;--sage:#52b788;--mint:#95d5b2;
@@ -409,11 +410,15 @@ function resetInput(){
   document.getElementById('output-area').innerHTML='<div class="empty"><span class="empty-g">🌿</span><div class="empty-title">No training cards yet</div><div class="empty-hint">Upload a schedule, type brand names, or load active clients to begin</div></div>';
 }
 
+let brandData=[];
+
 async function generateAll(){
   const btn=document.getElementById('gen-btn');
   btn.disabled=true;btn.textContent='Researching…';
   const out=document.getElementById('output-area');
   out.innerHTML='';
+  brandData=[];
+  const oldDl=document.getElementById('dl-bar');if(oldDl)oldDl.remove();
   for(const brand of selBrands){
     const id='blk_'+brand.replace(/\W+/g,'_');
     out.innerHTML+=`<div class="brand-block" id="${id}">
@@ -430,6 +435,12 @@ async function generateAll(){
   }
   for(const brand of selBrands) await doCard(brand);
   btn.disabled=false;btn.textContent='Regenerate →';
+  if(brandData.length>0){
+    const bar=document.createElement('div');bar.id='dl-bar';
+    bar.style.cssText='display:flex;align-items:center;justify-content:center;gap:16px;padding:20px;margin:24px auto 0;max-width:740px;background:var(--glass2);border:1px solid var(--border2);border-radius:var(--r);';
+    bar.innerHTML=`<span style="color:var(--text2);font-size:14px;">\u2705 ${brandData.length} brand${brandData.length>1?'s':''} researched</span><button class="btn" onclick="downloadPptx()" style="background:var(--forest);color:var(--mint);font-weight:600;">\u2B07 Download PowerPoint</button>`;
+    out.parentNode.insertBefore(bar,out);
+  }
 }
 
 async function doCard(brand){
@@ -483,6 +494,7 @@ Return ONLY a valid JSON object — no markdown, no backticks, nothing else:
       });
       parsed=JSON.parse(raw);
     }
+    brandData.push(parsed);
     render(id,parsed);
   }catch(err){
     const blk=document.getElementById(id);
@@ -540,6 +552,68 @@ function render(id,d){
         </div>
       </div>
     </div>`;
+}
+
+function downloadPptx(){
+  const pptx=new PptxGenJS();
+  pptx.layout='LAYOUT_WIDE';
+  pptx.defineSlideMaster({title:'GRASSROOTS',background:{color:'0D1A0F'},objects:[
+    {rect:{x:0,y:0,w:'100%',h:0.55,fill:{color:'162418'}}},
+    {text:{text:'GRASSROOTS',options:{x:0.5,y:0.12,w:2,h:0.3,fontSize:10,fontFace:'Arial',color:'52B788',bold:true}}},
+    {text:{text:'Brand Training Agent',options:{x:2.6,y:0.12,w:2,h:0.3,fontSize:9,fontFace:'Arial',color:'6B6452'}}},
+    {line:{x1:0.5,y1:7.2,x2:12.8,y2:7.2,line:{color:'2D6A4F',width:0.5}}},
+    {text:{text:'INTERNAL',options:{x:0.5,y:7.25,w:4,h:0.25,fontSize:7,fontFace:'Arial',color:'6B6452'}}}
+  ]});
+  const ts=pptx.addSlide({masterName:'GRASSROOTS'});
+  ts.addText('Brand Training\nCards',{x:0.8,y:1.5,w:8,h:2.5,fontSize:44,fontFace:'Arial',color:'F0ECE2',bold:true,lineSpacingMultiple:1.1});
+  ts.addText(brandData.length+' brand'+(brandData.length>1?'s':'')+' \u00b7 '+new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'}),{x:0.8,y:4.0,w:6,h:0.4,fontSize:14,fontFace:'Arial',color:'52B788'});
+  ts.addShape(pptx.shapes.RECTANGLE,{x:0.8,y:3.8,w:2,h:0.04,fill:{color:'2D6A4F'}});
+  brandData.forEach(function(d,bi){
+    var ac=bColor(d.brand).replace('#','');
+    var s1=pptx.addSlide({masterName:'GRASSROOTS'});
+    s1.addShape(pptx.shapes.RECTANGLE,{x:0,y:0.55,w:0.06,h:1.2,fill:{color:ac}});
+    s1.addText('BRAND STORY',{x:0.5,y:0.7,w:3,h:0.3,fontSize:8,fontFace:'Arial',color:ac,bold:true});
+    s1.addText(d.brand,{x:0.5,y:1.0,w:8,h:0.6,fontSize:28,fontFace:'Arial',color:'F0ECE2',bold:true});
+    if(d.tagline)s1.addText('\u201c'+d.tagline+'\u201d',{x:0.5,y:1.6,w:8,h:0.35,fontSize:12,fontFace:'Arial',color:ac,italic:true});
+    var rows1=[];
+    if(d.founded)rows1.push([{text:'Founded',options:{bold:true,color:'A89F8A',fontSize:9}},{text:d.founded,options:{color:'F0ECE2',fontSize:9}}]);
+    if(d.targetAudience)rows1.push([{text:'Audience',options:{bold:true,color:'A89F8A',fontSize:9}},{text:d.targetAudience,options:{color:'F0ECE2',fontSize:9}}]);
+    if(d.mission)rows1.push([{text:'Mission',options:{bold:true,color:'A89F8A',fontSize:9}},{text:d.mission,options:{color:'F0ECE2',fontSize:9}}]);
+    if(d.productFocus)rows1.push([{text:'Products',options:{bold:true,color:'A89F8A',fontSize:9}},{text:d.productFocus,options:{color:'F0ECE2',fontSize:9}}]);
+    if(rows1.length)s1.addTable(rows1,{x:0.5,y:2.1,w:12,colW:[1.4,10.6],border:{type:'none'},rowH:0.45,color:'F0ECE2',fill:{color:'162418'}});
+    var bens=(d.keyBenefits||[]).join('  \u00b7  ');
+    var bY=rows1.length?2.1+rows1.length*0.45+0.2:4.0;
+    if(bens)s1.addText('KEY BENEFITS:  '+bens,{x:0.5,y:bY,w:12,h:0.35,fontSize:9,fontFace:'Arial',color:'95D5B2'});
+    var certs=(d.certifications||[]).join('  \u00b7  ');
+    if(certs)s1.addText('CERTIFICATIONS:  '+certs,{x:0.5,y:bY+0.4,w:12,h:0.35,fontSize:9,fontFace:'Arial',color:'A89F8A'});
+    var s2=pptx.addSlide({masterName:'GRASSROOTS'});
+    s2.addShape(pptx.shapes.RECTANGLE,{x:0,y:0.55,w:0.06,h:1.2,fill:{color:ac}});
+    s2.addText('TALKING POINTS',{x:0.5,y:0.7,w:3,h:0.3,fontSize:8,fontFace:'Arial',color:ac,bold:true});
+    s2.addText(d.brand,{x:0.5,y:1.0,w:8,h:0.6,fontSize:28,fontFace:'Arial',color:'F0ECE2',bold:true});
+    s2.addText('What to say to shoppers at the shelf:',{x:0.5,y:1.6,w:8,h:0.3,fontSize:10,fontFace:'Arial',color:'A89F8A',italic:true});
+    (d.talkingPoints||[]).forEach(function(tp,ti){
+      var tpY=2.1+ti*0.9;
+      s2.addShape(pptx.shapes.OVAL,{x:0.5,y:tpY+0.05,w:0.35,h:0.35,fill:{color:ac}});
+      s2.addText(''+(ti+1),{x:0.5,y:tpY+0.05,w:0.35,h:0.35,fontSize:11,fontFace:'Arial',color:'0D1A0F',bold:true,align:'center',valign:'middle'});
+      s2.addText(tp,{x:1.1,y:tpY,w:11.2,h:0.6,fontSize:12,fontFace:'Arial',color:'F0ECE2',valign:'top'});
+    });
+    if(d.categoryContext){
+      var ctxY=2.1+(d.talkingPoints||[]).length*0.9+0.3;
+      s2.addShape(pptx.shapes.RECTANGLE,{x:0.5,y:ctxY,w:12,h:0.03,fill:{color:'2D6A4F'}});
+      s2.addText('CATEGORY CONTEXT',{x:0.5,y:ctxY+0.15,w:3,h:0.25,fontSize:8,fontFace:'Arial',color:ac,bold:true});
+      s2.addText(d.categoryContext,{x:0.5,y:ctxY+0.4,w:12,h:0.5,fontSize:10,fontFace:'Arial',color:'A89F8A'});
+    }
+    if(d.ingredients&&d.ingredients.length){
+      var s3=pptx.addSlide({masterName:'GRASSROOTS'});
+      s3.addShape(pptx.shapes.RECTANGLE,{x:0,y:0.55,w:0.06,h:1.2,fill:{color:ac}});
+      s3.addText('KEY INGREDIENTS',{x:0.5,y:0.7,w:3,h:0.3,fontSize:8,fontFace:'Arial',color:ac,bold:true});
+      s3.addText(d.brand,{x:0.5,y:1.0,w:8,h:0.6,fontSize:28,fontFace:'Arial',color:'F0ECE2',bold:true});
+      var hdr=[[{text:'Ingredient',options:{bold:true,color:'95D5B2',fontSize:10,fill:{color:'1A2E1F'}}},{text:'What it does',options:{bold:true,color:'95D5B2',fontSize:10,fill:{color:'1A2E1F'}}}]];
+      var iRows=d.ingredients.map(function(ing){return [{text:ing.name,options:{bold:true,color:'F0ECE2',fontSize:10,fill:{color:'162418'}}},{text:ing.benefit,options:{color:'A89F8A',fontSize:10,fill:{color:'162418'}}}];});
+      s3.addTable(hdr.concat(iRows),{x:0.5,y:1.8,w:12,colW:[3,9],border:{type:'solid',color:'2D6A4F',pt:0.5},rowH:0.5});
+    }
+  });
+  pptx.writeFile({fileName:'Brand_Training_'+new Date().toISOString().slice(0,10)+'.pptx'});
 }
 </script>
 </body>
