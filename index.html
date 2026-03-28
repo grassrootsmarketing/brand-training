@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Brand Training Agent — Grassroots</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root {
+  --ink:#0d1a0f;--ink2:#162418;--forest:#2d6a4f;--sage:#52b788;--mint:#95d5b2;
+  --ember:#e76f51;--glass:rgba(255,255,255,0.04);--glass2:rgba(255,255,255,0.07);
+  --border:rgba(255,255,255,0.08);--border2:rgba(255,255,255,0.14);
+  --text1:#f0ece2;--text2:#a89f8a;--text3:#6b6452;--r:10px;--r-sm:6px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Syne',sans-serif;background:var(--ink);color:var(--text1);min-height:100vh;overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");pointer-events:none;z-index:999;opacity:0.55;}
+
+/* TOPBAR */
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:0 2.5rem;height:56px;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:50;background:rgba(13,26,15,0.9);backdrop-filter:blur(14px);}
+.logo{display:flex;align-items:center;gap:10px;}
+.logo-mark{width:28px;height:28px;background:var(--forest);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:var(--mint);}
+.logo-text{font-size:13px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;}
+.nav-sep{width:1px;height:18px;background:var(--border2);margin:0 16px;}
+.nav-label{font-size:12px;color:var(--text3);}
+.topbar-right{display:flex;align-items:center;gap:8px;}
+.live-dot{width:6px;height:6px;border-radius:50%;background:var(--sage);animation:livepulse 2.5s ease-in-out infinite;}
+@keyframes livepulse{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(82,183,136,0.5);}50%{opacity:0.6;box-shadow:0 0 0 5px rgba(82,183,136,0);}}
+.tag-badge{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text3);letter-spacing:0.08em;}
+
+/* HERO */
+.hero{padding:3.5rem 2.5rem 1.5rem;max-width:960px;margin:0 auto;position:relative;}
+.hero::after{content:'';position:absolute;top:0;right:0;width:420px;height:280px;background:radial-gradient(ellipse at top right,rgba(45,106,79,0.18) 0%,transparent 65%);pointer-events:none;}
+.hero-eye{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:0.18em;text-transform:uppercase;color:var(--sage);margin-bottom:14px;display:flex;align-items:center;gap:10px;}
+.hero-eye::before{content:'';display:inline-block;width:24px;height:1px;background:var(--sage);}
+.hero-title{font-size:clamp(2rem,5vw,3rem);font-weight:800;line-height:1.05;letter-spacing:-0.02em;margin-bottom:12px;}
+.hero-title em{font-family:'Instrument Serif',serif;font-style:italic;color:var(--sage);font-weight:400;}
+.hero-sub{font-size:14px;color:var(--text2);max-width:460px;line-height:1.7;font-weight:400;}
+
+/* CONTAINER */
+.container{max-width:960px;margin:0 auto;padding:1.5rem 2.5rem 5rem;}
+
+/* INPUT PANEL */
+.input-panel{background:var(--glass);border:1px solid var(--border2);border-radius:14px;padding:2rem 2.5rem;margin-bottom:1.5rem;position:relative;overflow:hidden;}
+.input-panel::before{content:'';position:absolute;top:-80px;right:-80px;width:240px;height:240px;border-radius:50%;background:radial-gradient(circle,rgba(45,106,79,0.1) 0%,transparent 70%);pointer-events:none;}
+
+/* TABS */
+.input-tabs{display:flex;gap:0;border:1px solid var(--border2);border-radius:var(--r-sm);overflow:hidden;width:fit-content;margin-bottom:1.5rem;}
+.itab{font-family:'Syne',sans-serif;font-size:12px;font-weight:700;letter-spacing:0.04em;padding:7px 18px;background:transparent;border:none;color:var(--text3);cursor:pointer;transition:all 0.15s;}
+.itab.active{background:var(--glass2);color:var(--text1);}
+.itab:hover:not(.active){color:var(--text2);}
+
+/* TAB PANELS */
+.tab-panel{display:none;}
+.tab-panel.active{display:block;}
+
+/* UPLOAD TAB */
+.upload-grid{display:grid;grid-template-columns:1fr auto 1fr;gap:20px;align-items:center;}
+@media(max-width:640px){.upload-grid{grid-template-columns:1fr;}}
+.upload-drop{border:1.5px dashed var(--border2);border-radius:var(--r);padding:2rem 1.5rem;cursor:pointer;transition:all 0.2s;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:10px;background:var(--glass);min-height:150px;}
+.upload-drop:hover,.upload-drop.drag{border-color:var(--sage);background:rgba(82,183,136,0.06);}
+.drop-icon{width:42px;height:42px;border-radius:10px;background:var(--glass2);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:18px;}
+.drop-title{font-size:13px;font-weight:700;color:var(--text1);}
+.drop-sub{font-size:11px;color:var(--text3);font-family:'JetBrains Mono',monospace;}
+.or-sep{display:flex;align-items:center;justify-content:center;}
+.or-txt{font-size:11px;color:var(--text3);font-family:'JetBrains Mono',monospace;background:var(--ink);padding:5px 9px;border-radius:5px;border:1px solid var(--border);}
+.defaults-panel{border:1px solid var(--border);border-radius:var(--r);padding:1.5rem;background:var(--glass);display:flex;flex-direction:column;gap:12px;min-height:150px;justify-content:center;}
+.def-title{font-size:9px;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;color:var(--text3);font-family:'JetBrains Mono',monospace;margin-bottom:2px;}
+.def-list{display:flex;flex-direction:column;gap:5px;}
+.def-row{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text2);}
+.def-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
+
+/* TEXT ENTRY TAB */
+.text-entry-wrap{display:flex;flex-direction:column;gap:12px;}
+.text-entry-label{font-size:12px;color:var(--text2);line-height:1.6;}
+.text-entry-label span{color:var(--sage);font-family:'JetBrains Mono',monospace;font-size:11px;}
+textarea.brand-input{
+  font-family:'JetBrains Mono',monospace;font-size:13px;
+  background:var(--glass);border:1px solid var(--border2);
+  border-radius:var(--r);color:var(--text1);
+  padding:1rem 1.25rem;width:100%;min-height:100px;resize:vertical;
+  outline:none;transition:border-color 0.15s;line-height:1.7;
+}
+textarea.brand-input::placeholder{color:var(--text3);}
+textarea.brand-input:focus{border-color:var(--sage);}
+.text-entry-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.parsed-preview{display:flex;flex-wrap:wrap;gap:6px;margin-top:2px;}
+.parsed-pill{font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;border:1px solid var(--border2);background:var(--glass2);color:var(--text2);display:flex;align-items:center;gap:5px;}
+.parsed-pill .ppd{width:6px;height:6px;border-radius:50%;}
+
+/* BUTTONS */
+.btn{font-family:'Syne',sans-serif;font-size:12px;font-weight:700;letter-spacing:0.04em;border-radius:var(--r-sm);border:1px solid var(--border2);background:var(--glass2);color:var(--text1);padding:8px 16px;cursor:pointer;transition:all 0.14s;display:inline-flex;align-items:center;gap:7px;}
+.btn:hover{background:var(--glass);border-color:var(--text3);}
+.btn:active{transform:scale(0.97);}
+.btn:disabled{opacity:0.35;cursor:not-allowed;transform:none;}
+.btn-go{background:var(--forest);border-color:var(--sage);color:var(--mint);padding:10px 22px;font-size:13px;border-radius:var(--r);}
+.btn-go:hover{background:var(--sage);color:var(--ink);border-color:var(--sage);}
+.btn-load{background:var(--forest);border-color:var(--sage);color:var(--mint);width:100%;justify-content:center;padding:10px;border-radius:var(--r-sm);}
+.btn-load:hover{background:var(--sage);color:var(--ink);}
+.btn-parse{background:var(--forest);border-color:var(--sage);color:var(--mint);border-radius:var(--r-sm);}
+.btn-parse:hover{background:var(--sage);color:var(--ink);}
+
+/* BRANDS BAR */
+.brands-bar{background:var(--glass);border:1px solid var(--border2);border-radius:14px;padding:1.25rem 1.5rem;margin-bottom:1.5rem;display:none;}
+.brands-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:10px;}
+.brands-meta{font-size:12px;color:var(--text2);}
+.brands-meta strong{color:var(--text1);}
+.brand-pills{display:flex;flex-wrap:wrap;gap:6px;}
+.bpill{font-size:11px;font-weight:600;letter-spacing:0.03em;padding:5px 13px;border-radius:20px;border:1px solid var(--border2);background:var(--glass);color:var(--text2);cursor:pointer;transition:all 0.13s;user-select:none;display:flex;align-items:center;gap:6px;}
+.bpill .pd{width:6px;height:6px;border-radius:50%;}
+.bpill.on{background:var(--glass2);color:var(--text1);border-color:rgba(255,255,255,0.22);}
+.bpill:hover:not(.on){border-color:var(--text3);background:var(--glass2);}
+
+/* OUTPUT */
+.output-area{display:flex;flex-direction:column;gap:2.5rem;}
+.brand-block{animation:fadeUp 0.45s ease both;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(18px);}to{opacity:1;transform:translateY(0);}}
+.brand-block:nth-child(1){animation-delay:0ms;}.brand-block:nth-child(2){animation-delay:60ms;}.brand-block:nth-child(3){animation-delay:120ms;}.brand-block:nth-child(4){animation-delay:180ms;}.brand-block:nth-child(5){animation-delay:240ms;}
+
+.bhdr{display:flex;align-items:center;gap:12px;margin-bottom:12px;}
+.bhdr-name{font-size:10px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;font-family:'JetBrains Mono',monospace;white-space:nowrap;}
+.bhdr-line{flex:1;height:1px;}
+.bhdr-ct{font-size:10px;color:var(--text3);font-family:'JetBrains Mono',monospace;white-space:nowrap;}
+
+.slides-pair{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+@media(max-width:700px){.slides-pair{grid-template-columns:1fr;}}
+
+/* SLIDE CARD */
+.slide-card{background:var(--ink2);border:1px solid var(--border2);border-radius:14px;overflow:hidden;display:flex;flex-direction:column;transition:border-color 0.2s,transform 0.2s;}
+.slide-card:hover{border-color:rgba(255,255,255,0.22);transform:translateY(-2px);}
+.slide-top{padding:1rem 1.25rem 0.9rem;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;justify-content:space-between;gap:10px;position:relative;}
+.slide-accent-bar{position:absolute;bottom:0;left:0;height:2px;width:35%;}
+.slide-type{font-size:9px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:var(--text3);margin-bottom:4px;font-family:'JetBrains Mono',monospace;}
+.slide-brand{font-size:15px;font-weight:700;letter-spacing:-0.01em;}
+.slide-num{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text3);background:var(--glass);border:1px solid var(--border);padding:3px 8px;border-radius:20px;white-space:nowrap;flex-shrink:0;}
+.slide-body{padding:1.25rem;flex:1;display:flex;flex-direction:column;gap:1rem;}
+
+/* CONTENT */
+.flbl{font-size:9px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:var(--text3);font-family:'JetBrains Mono',monospace;margin-bottom:5px;}
+.fval{font-size:13px;color:var(--text1);line-height:1.6;}
+.fval.dim{color:var(--text2);}
+.fval.quote{font-family:'Instrument Serif',serif;font-style:italic;font-size:15px;color:var(--sage);line-height:1.45;}
+.mini2{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.mini-cell{background:var(--glass);border:1px solid var(--border);border-radius:var(--r-sm);padding:0.65rem 0.75rem;}
+.hdiv{height:1px;background:var(--border);}
+.tags{display:flex;flex-wrap:wrap;gap:5px;}
+.tg{font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;letter-spacing:0.02em;}
+.tg-g{background:rgba(45,106,79,0.3);color:var(--mint);border:1px solid rgba(82,183,136,0.25);}
+.tg-m{background:var(--glass);color:var(--text2);border:1px solid var(--border);}
+.tp-list{display:flex;flex-direction:column;gap:8px;}
+.tp-row{display:flex;gap:10px;align-items:flex-start;}
+.tp-idx{font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:500;color:var(--sage);background:rgba(45,106,79,0.2);border:1px solid rgba(82,183,136,0.2);width:18px;height:18px;border-radius:4px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px;}
+.tp-txt{font-size:12.5px;color:var(--text1);line-height:1.55;}
+.ingr-table{display:flex;flex-direction:column;gap:9px;}
+.ingr-row{display:flex;gap:10px;align-items:flex-start;padding-bottom:9px;border-bottom:1px solid var(--border);}
+.ingr-row:last-child{border-bottom:none;padding-bottom:0;}
+.ingr-name{font-size:11px;font-weight:700;color:var(--sage);min-width:110px;flex-shrink:0;line-height:1.4;padding-top:1px;font-family:'JetBrains Mono',monospace;letter-spacing:0.02em;}
+.ingr-desc{font-size:12.5px;color:var(--text2);line-height:1.55;}
+
+/* LOADING / ERROR */
+.loading-wrap{background:var(--ink2);border:1px solid var(--border2);border-radius:14px;padding:2rem 1.5rem;display:flex;align-items:center;gap:16px;}
+.spin{width:22px;height:22px;border:2px solid var(--border2);border-top-color:var(--sage);border-radius:50%;animation:spin 0.7s linear infinite;flex-shrink:0;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.l-brand{font-size:14px;font-weight:600;margin-bottom:3px;}
+.l-step{font-size:11px;color:var(--text3);font-family:'JetBrains Mono',monospace;}
+.err-wrap{background:rgba(231,111,81,0.08);border:1px solid rgba(231,111,81,0.25);border-radius:var(--r);padding:1rem 1.25rem;display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:13px;color:#f4a261;}
+
+/* EMPTY */
+.empty{text-align:center;padding:5rem 2rem;color:var(--text3);}
+.empty-g{font-size:3rem;margin-bottom:16px;display:block;opacity:0.35;}
+.empty-title{font-size:15px;font-weight:600;color:var(--text2);margin-bottom:6px;}
+.empty-hint{font-size:13px;}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div style="display:flex;align-items:center;">
+    <div class="logo">
+      <div class="logo-mark">G</div>
+      <div class="logo-text">Grassroots</div>
+    </div>
+    <div class="nav-sep"></div>
+    <div class="nav-label">Brand Training Agent</div>
+  </div>
+  <div class="topbar-right">
+    <div class="live-dot"></div>
+    <div class="tag-badge">INTERNAL · v2</div>
+  </div>
+</div>
+
+<div class="hero">
+  <div class="hero-eye">Ambassador Toolkit</div>
+  <h1 class="hero-title">Know every brand<br><em>before you hit the floor.</em></h1>
+  <p class="hero-sub">Drop in your demo schedule and get AI-researched brand cards — story, benefits, ingredients, and talking points — ready in seconds.</p>
+</div>
+
+<div class="container">
+
+  <!-- INPUT PANEL -->
+  <div class="input-panel" id="input-panel">
+    <div class="input-tabs">
+      <button class="itab active" onclick="switchTab('upload')">Upload schedule</button>
+      <button class="itab" onclick="switchTab('text')">Type brand names</button>
+      <button class="itab" onclick="switchTab('defaults')">Active clients</button>
+    </div>
+
+    <!-- TAB: UPLOAD -->
+    <div class="tab-panel active" id="tab-upload">
+      <div class="upload-grid">
+        <div class="upload-drop" id="dropzone" onclick="document.getElementById('fin').click()">
+          <div class="drop-icon">📋</div>
+          <div class="drop-title">Upload Promomash export</div>
+          <div class="drop-sub">CSV or XLSX · reads CAMPAIGN NAME column</div>
+        </div>
+        <div class="or-sep"><div class="or-txt">or</div></div>
+        <div style="display:flex;flex-direction:column;gap:8px;justify-content:center;">
+          <div style="font-size:11px;color:var(--text3);font-family:'JetBrains Mono',monospace;margin-bottom:4px;">SUPPORTED COLUMNS</div>
+          <div style="font-size:12px;color:var(--text2);line-height:1.8;">
+            CAMPAIGN NAME<br>Brand · Client · Company<br>Account · Brand Name
+          </div>
+        </div>
+      </div>
+      <input type="file" id="fin" accept=".csv,.xlsx,.xls" style="display:none">
+    </div>
+
+    <!-- TAB: TEXT -->
+    <div class="tab-panel" id="tab-text">
+      <div class="text-entry-wrap">
+        <div class="text-entry-label">
+          Paste or type brand names — one per line, or separated by commas.<br>
+          <span>Example: MaryRuth Organics, Tractor Beverages, Copra Coconuts</span>
+        </div>
+        <textarea class="brand-input" id="brand-textarea" placeholder="MaryRuth Organics&#10;Tractor Beverages&#10;Copra Coconuts"></textarea>
+        <div class="text-entry-actions">
+          <button class="btn btn-parse" onclick="parseTextInput()">Parse brands →</button>
+          <div class="parsed-preview" id="parsed-preview"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: DEFAULTS -->
+    <div class="tab-panel" id="tab-defaults">
+      <div class="defaults-panel" style="min-height:auto;border:none;padding:0;background:transparent;">
+        <div class="def-list" id="def-list"></div>
+        <div style="margin-top:12px;">
+          <button class="btn btn-go" onclick="loadDefaults()">Load all active clients →</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BRANDS BAR -->
+  <div class="brands-bar" id="brands-bar">
+    <div class="brands-top">
+      <div class="brands-meta" id="brands-meta"></div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <button class="btn" onclick="resetInput()">↑ Change input</button>
+        <button class="btn btn-go" id="gen-btn" onclick="generateAll()">Generate cards →</button>
+      </div>
+    </div>
+    <div class="brand-pills" id="brand-pills"></div>
+  </div>
+
+  <!-- OUTPUT -->
+  <div class="output-area" id="output-area">
+    <div class="empty">
+      <span class="empty-g">🌿</span>
+      <div class="empty-title">No training cards yet</div>
+      <div class="empty-hint">Upload a schedule, type brand names, or load active clients to begin</div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const DEFAULTS=[
+  {name:'MaryRuth Organics',color:'#e63946'},
+  {name:'Tractor Beverages',color:'#52b788'},
+  {name:'Copra Coconuts',color:'#f4a261'},
+  {name:'Woodenspoon Herbs',color:'#a98467'},
+  {name:'Everiday Foods',color:'#4cc9f0'},
+];
+const PAL=['#52b788','#e76f51','#4cc9f0','#a98467','#e63946','#f4a261','#90be6d','#c77dff'];
+
+function bColor(name){
+  const n=name.toLowerCase();
+  const m=DEFAULTS.find(d=>n.includes(d.name.toLowerCase().split(' ')[0]));
+  if(m)return m.color;
+  let h=0;for(let i=0;i<name.length;i++)h=(h*31+name.charCodeAt(i))%PAL.length;
+  return PAL[h];
+}
+
+// Build defaults list
+document.getElementById('def-list').innerHTML=DEFAULTS.map(d=>`
+  <div class="def-row"><div class="def-dot" style="background:${d.color}"></div><span>${d.name}</span></div>`).join('');
+
+let allBrands=[],selBrands=[];
+
+// Tab switching
+function switchTab(t){
+  document.querySelectorAll('.itab').forEach((el,i)=>{
+    el.classList.toggle('active',['upload','text','defaults'][i]===t);
+  });
+  document.querySelectorAll('.tab-panel').forEach(el=>el.classList.remove('active'));
+  document.getElementById('tab-'+t).classList.add('active');
+}
+
+// Drag/drop
+const dz=document.getElementById('dropzone');
+dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('drag');});
+dz.addEventListener('dragleave',()=>dz.classList.remove('drag'));
+dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('drag');if(e.dataTransfer.files[0])processFile(e.dataTransfer.files[0]);});
+document.getElementById('fin').addEventListener('change',e=>{if(e.target.files[0])processFile(e.target.files[0]);});
+
+function processFile(file){
+  const ext=file.name.split('.').pop().toLowerCase();
+  if(ext==='csv'){
+    Papa.parse(file,{header:true,skipEmptyLines:true,complete:r=>extractBrands(r.data,file.name)});
+  } else {
+    const r=new FileReader();
+    r.onload=e=>{
+      const wb=XLSX.read(e.target.result,{type:'array'});
+      const ws=wb.Sheets[wb.SheetNames[0]];
+      extractBrands(XLSX.utils.sheet_to_json(ws,{defval:''}),file.name);
+    };
+    r.readAsArrayBuffer(file);
+  }
+}
+
+function extractBrands(data,fname){
+  if(!data||!data.length){alert('No data found in file.');return;}
+  const keys=Object.keys(data[0]);
+
+  // Priority order — Promomash first, then generic fallbacks
+  const priority=[
+    'CAMPAIGN NAME','Campaign Name','campaign name','campaign_name',
+    'brand','Brand','BRAND',
+    'client','Client','CLIENT',
+    'brand name','Brand Name','BRAND NAME',
+    'company','Company','COMPANY',
+    'Account','account','ACCOUNT',
+  ];
+
+  let col=priority.find(c=>keys.includes(c));
+  // fuzzy fallback
+  if(!col) col=keys.find(k=>/campaign|brand|client|company|account/i.test(k));
+
+  if(!col){
+    alert(`Could not find a brand column.\n\nColumns found: ${keys.slice(0,8).join(', ')}\n\nTry the "Type brand names" tab instead.`);
+    return;
+  }
+
+  const unique=[...new Set(data.map(r=>(r[col]||'').toString().trim()).filter(Boolean))].sort();
+  if(!unique.length){alert('No brand names found in column: '+col);return;}
+  setBrands(unique,`<strong>${unique.length}</strong> brands from <strong>${col}</strong> · ${data.length} rows · ${fname}`);
+}
+
+// Text input parsing
+function parseTextInput(){
+  const raw=document.getElementById('brand-textarea').value.trim();
+  if(!raw){return;}
+  // Split on newlines or commas, clean up
+  const brands=[...new Set(
+    raw.split(/[\n,]+/)
+      .map(s=>s.trim())
+      .filter(s=>s.length>1)
+  )].sort();
+  if(!brands.length){alert('No brand names detected.');return;}
+  // show preview
+  document.getElementById('parsed-preview').innerHTML=brands.map(b=>`
+    <span class="parsed-pill"><span class="ppd" style="background:${bColor(b)}"></span>${b}</span>`).join('');
+  // short delay then set
+  setTimeout(()=>setBrands(brands,`<strong>${brands.length}</strong> brands from text input`),300);
+}
+
+function loadDefaults(){setBrands(DEFAULTS.map(d=>d.name),'Active client list');}
+
+function setBrands(brands,meta){
+  allBrands=brands;selBrands=[...brands];
+  document.getElementById('input-panel').style.display='none';
+  document.getElementById('brands-bar').style.display='block';
+  document.getElementById('brands-meta').innerHTML=meta;
+  renderPills();
+}
+
+function renderPills(){
+  document.getElementById('brand-pills').innerHTML=allBrands.map(b=>{
+    const c=bColor(b),on=selBrands.includes(b);
+    return `<span class="bpill ${on?'on':''}" onclick="toggleBrand(${JSON.stringify(b)})">
+      <span class="pd" style="background:${c};opacity:${on?1:0.4}"></span>${b}</span>`;
+  }).join('');
+}
+
+function toggleBrand(b){
+  if(selBrands.includes(b)){if(selBrands.length>1)selBrands=selBrands.filter(x=>x!==b);}
+  else selBrands.push(b);
+  renderPills();
+}
+
+function resetInput(){
+  allBrands=[];selBrands=[];
+  document.getElementById('input-panel').style.display='block';
+  document.getElementById('brands-bar').style.display='none';
+  document.getElementById('brand-textarea').value='';
+  document.getElementById('parsed-preview').innerHTML='';
+  document.getElementById('output-area').innerHTML='<div class="empty"><span class="empty-g">🌿</span><div class="empty-title">No training cards yet</div><div class="empty-hint">Upload a schedule, type brand names, or load active clients to begin</div></div>';
+}
+
+async function generateAll(){
+  const btn=document.getElementById('gen-btn');
+  btn.disabled=true;btn.textContent='Researching…';
+  const out=document.getElementById('output-area');
+  out.innerHTML='';
+  for(const brand of selBrands){
+    const id='blk_'+brand.replace(/\W+/g,'_');
+    out.innerHTML+=`<div class="brand-block" id="${id}">
+      <div class="bhdr">
+        <div class="bhdr-name" style="color:${bColor(brand)}">${brand}</div>
+        <div class="bhdr-line" style="background:linear-gradient(to right,${bColor(brand)}44,transparent)"></div>
+        <div class="bhdr-ct">loading…</div>
+      </div>
+      <div class="loading-wrap">
+        <div class="spin"></div>
+        <div><div class="l-brand">${brand}</div><div class="l-step" id="${id}_s">Searching brand website &amp; nutritional panels…</div></div>
+      </div>
+    </div>`;
+  }
+  for(const brand of selBrands) await doCard(brand);
+  btn.disabled=false;btn.textContent='Regenerate →';
+}
+
+async function doCard(brand){
+  const id='blk_'+brand.replace(/\W+/g,'_');
+  try{
+    const prompt=`You are a brand education researcher for a field marketing company that runs in-store demos at Whole Foods and Sprouts. Research "${brand}" using their website and product/nutritional information.
+
+Return ONLY a valid JSON object — no markdown, no backticks, nothing else:
+
+{
+  "brand": "${brand}",
+  "tagline": "official tagline or key positioning line (max 12 words)",
+  "founded": "founding year + 1-sentence origin story",
+  "mission": "brand mission and values in 1-2 sentences",
+  "productFocus": "what they make and who it is for in 2 sentences",
+  "targetAudience": "who buys this brand in plain language",
+  "keyBenefits": ["benefit 1 (max 8 words)","benefit 2","benefit 3","benefit 4"],
+  "certifications": ["certification 1","certification 2"],
+  "talkingPoints": [
+    "Natural conversational thing an ambassador says to a Whole Foods or Sprouts shopper",
+    "Second talking point",
+    "Third talking point"
+  ],
+  "categoryContext": "2 sentences on the broader product category — why consumers are choosing it and what the trend is",
+  "ingredients": [
+    {"name":"key ingredient name","benefit":"what it does for the body in one clear sentence"},
+    {"name":"ingredient 2","benefit":"..."},
+    {"name":"ingredient 3","benefit":"..."},
+    {"name":"ingredient 4","benefit":"..."}
+  ]
+}`;
+    const resp=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
+      model:'claude-sonnet-4-20250514',max_tokens:1200,
+      tools:[{type:'web_search_20250305',name:'web_search'}],
+      messages:[{role:'user',content:prompt}]
+    })});
+    const data=await resp.json();
+    const text=data.content.filter(b=>b.type==='text').map(b=>b.text).join('');
+    const s=text.indexOf('{'),e=text.lastIndexOf('}');
+    if(s===-1)throw new Error('No JSON in response');
+    render(id,JSON.parse(text.slice(s,e+1)));
+  }catch(err){
+    const blk=document.getElementById(id);
+    if(blk)blk.innerHTML=`<div class="bhdr"><div class="bhdr-name" style="color:${bColor(brand)}">${brand}</div><div class="bhdr-line"></div></div>
+      <div class="err-wrap"><span>Failed: <strong>${brand}</strong> — ${err.message}</span><button class="btn" onclick="doCard(${JSON.stringify(brand)})">Retry</button></div>`;
+  }
+}
+
+function render(id,d){
+  const c=bColor(d.brand);
+  const blk=document.getElementById(id);
+  if(!blk)return;
+  const bTags=(d.keyBenefits||[]).map(b=>`<span class="tg tg-g">${b}</span>`).join('');
+  const cTags=(d.certifications||[]).map(c=>`<span class="tg tg-m">✓ ${c}</span>`).join('');
+  const tps=(d.talkingPoints||[]).map((t,i)=>`<div class="tp-row"><div class="tp-idx">${i+1}</div><div class="tp-txt">${t}</div></div>`).join('');
+  const ingrs=(d.ingredients||[]).map(i=>`<div class="ingr-row"><div class="ingr-name">${i.name}</div><div class="ingr-desc">${i.benefit}</div></div>`).join('');
+  blk.innerHTML=`
+    <div class="bhdr">
+      <div class="bhdr-name" style="color:${c}">${d.brand}</div>
+      <div class="bhdr-line" style="background:linear-gradient(to right,${c}44,transparent)"></div>
+      <div class="bhdr-ct">2 slides</div>
+    </div>
+    <div class="slides-pair">
+      <div class="slide-card">
+        <div class="slide-top">
+          <div><div class="slide-type">Brand Story</div><div class="slide-brand" style="color:${c}">${d.brand}</div></div>
+          <div class="slide-num">01 / 02</div>
+          <div class="slide-accent-bar" style="background:${c}"></div>
+        </div>
+        <div class="slide-body">
+          <div><div class="fval quote">"${d.tagline||'—'}"</div></div>
+          <div class="mini2">
+            <div class="mini-cell"><div class="flbl">Founded</div><div class="fval dim" style="font-size:12px">${d.founded||'—'}</div></div>
+            <div class="mini-cell"><div class="flbl">Who it's for</div><div class="fval dim" style="font-size:12px">${d.targetAudience||'—'}</div></div>
+          </div>
+          <div><div class="flbl">Mission</div><div class="fval dim">${d.mission||'—'}</div></div>
+          <div><div class="flbl">Products</div><div class="fval dim">${d.productFocus||'—'}</div></div>
+          <div class="hdiv"></div>
+          <div><div class="flbl">Key benefits</div><div class="tags" style="margin-top:6px">${bTags}</div></div>
+          ${cTags?`<div><div class="flbl">Certifications</div><div class="tags" style="margin-top:6px">${cTags}</div></div>`:''}
+          <div class="hdiv"></div>
+          <div><div class="flbl">Ambassador talking points</div><div class="tp-list" style="margin-top:8px">${tps}</div></div>
+        </div>
+      </div>
+      <div class="slide-card">
+        <div class="slide-top">
+          <div><div class="slide-type">Ingredients & Category</div><div class="slide-brand" style="color:${c}">${d.brand}</div></div>
+          <div class="slide-num">02 / 02</div>
+          <div class="slide-accent-bar" style="background:${c}"></div>
+        </div>
+        <div class="slide-body">
+          <div><div class="flbl">Why this category is growing</div><div class="fval dim" style="margin-top:5px">${d.categoryContext||'—'}</div></div>
+          <div class="hdiv"></div>
+          <div><div class="flbl">Key ingredients & what they do</div><div class="ingr-table" style="margin-top:10px">${ingrs}</div></div>
+        </div>
+      </div>
+    </div>`;
+}
+</script>
+</body>
+</html>
