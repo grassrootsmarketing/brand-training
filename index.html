@@ -182,6 +182,14 @@ textarea.brand-input:focus{border-color:var(--sage);}
 .sched-tbl .date-cell{color:var(--sage);font-family:'JetBrains Mono',monospace;font-size:11px;}
 .sched-tbl .amb-cell{color:var(--text2);}
 .sched-tbl .venue-cell{color:var(--text2);font-size:11px;}
+.sched-view-btn{opacity:0.5;}
+.sched-view-btn.active{opacity:1;background:var(--forest)!important;color:var(--mint)!important;}
+.amb-summary .amb-name{font-weight:700;color:var(--text1);font-size:14px;}
+.amb-summary .amb-brands{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px;}
+.amb-summary .amb-brand-tag{padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;background:var(--glass2);border:1px solid var(--border);}
+.amb-summary .amb-row{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;}
+.amb-summary .amb-row:hover{background:var(--glass);}
+.amb-summary .amb-count{color:var(--text3);font-size:11px;font-family:'JetBrains Mono',monospace;white-space:nowrap;}
 </style>
 </head>
 <body>
@@ -297,9 +305,9 @@ textarea.brand-input:focus{border-color:var(--sage);}
         <div style="font-size:12px;color:var(--text3);margin-top:4px;" id="sched-meta">Upload a Promomash export to see the schedule</div>
       </div>
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-        <select id="sched-filter-brand" onchange="renderScheduleTable()" style="padding:6px 10px;background:var(--ink2);border:1px solid var(--border2);border-radius:var(--r-sm);color:var(--text1);font-size:12px;font-family:'Syne',sans-serif;"><option value="">All brands</option></select>
-        <select id="sched-filter-amb" onchange="renderScheduleTable()" style="padding:6px 10px;background:var(--ink2);border:1px solid var(--border2);border-radius:var(--r-sm);color:var(--text1);font-size:12px;font-family:'Syne',sans-serif;"><option value="">All ambassadors</option></select>
-        <button class="btn" onclick="document.getElementById('sched-fin').click()" style="font-size:12px;">Upload schedule</button>
+        <select id="sched-filter-brand" onchange="if(typeof schedView!=='undefined'&&schedView==='summary')renderAmbassadorSummary();else renderScheduleTable();" style="padding:6px 10px;background:var(--ink2);border:1px solid var(--border2);border-radius:var(--r-sm);color:var(--text1);font-size:12px;font-family:'Syne',sans-serif;"><option value="">All brands</option></select>
+        <select id="sched-filter-amb" onchange="if(typeof schedView!=='undefined'&&schedView==='summary')renderAmbassadorSummary();else renderScheduleTable();" style="padding:6px 10px;background:var(--ink2);border:1px solid var(--border2);border-radius:var(--r-sm);color:var(--text1);font-size:12px;font-family:'Syne',sans-serif;"><option value="">All ambassadors</option></select>
+        <button class="btn sched-view-btn active" id="sv-full" onclick="setSchedView('full')" style="font-size:11px;padding:5px 10px;">Full Schedule</button><button class="btn sched-view-btn" id="sv-summary" onclick="setSchedView('summary')" style="font-size:11px;padding:5px 10px;">By Ambassador</button><button class="btn" onclick="document.getElementById('sched-fin').click()" style="font-size:12px;">Upload schedule</button>
         <input type="file" id="sched-fin" accept=".csv,.xlsx,.xls" style="display:none">
       </div>
     </div>
@@ -347,6 +355,40 @@ function loadScheduleData(data,fname){
   document.getElementById('sched-meta').innerHTML='<strong>'+scheduleRows.length+'</strong> events \u00b7 <strong>'+ambs.length+'</strong> ambassadors \u00b7 <strong>'+brands.length+'</strong> brands \u00b7 '+fname;
   renderScheduleTable();
 }
+
+var schedView='full';
+function setSchedView(v){
+  schedView=v;
+  document.getElementById('sv-full').classList.toggle('active',v==='full');
+  document.getElementById('sv-summary').classList.toggle('active',v==='summary');
+  if(v==='full')renderScheduleTable();
+  else renderAmbassadorSummary();
+}
+function renderAmbassadorSummary(){
+  if(!scheduleRows.length){document.getElementById('sched-table-wrap').innerHTML='<div style="text-align:center;padding:40px;color:var(--text3);">Upload a schedule first.</div>';return;}
+  var brandF=document.getElementById('sched-filter-brand').value;
+  var ambF=document.getElementById('sched-filter-amb').value;
+  var rows=scheduleRows;
+  if(brandF)rows=rows.filter(function(r){return r.brand===brandF;});
+  if(ambF)rows=rows.filter(function(r){return r.ambassador===ambF;});
+  var map={};
+  rows.forEach(function(r){
+    if(!map[r.ambassador])map[r.ambassador]={brands:{},count:0};
+    map[r.ambassador].brands[r.brand]=(map[r.ambassador].brands[r.brand]||0)+1;
+    map[r.ambassador].count++;
+  });
+  var sorted=Object.keys(map).sort();
+  if(!sorted.length){document.getElementById('sched-table-wrap').innerHTML='<div style="text-align:center;padding:40px;color:var(--text3);">No events match filters.</div>';return;}
+  var html='<div class="amb-summary">';
+  sorted.forEach(function(amb){
+    var brands=Object.keys(map[amb].brands).sort();
+    var tags=brands.map(function(b){return '<span class="amb-brand-tag" style="color:'+bColor(b)+';">'+b+' <span style="opacity:0.5;">('+map[amb].brands[b]+')</span></span>';}).join('');
+    html+='<div class="amb-row"><div><div class="amb-name">'+amb+'</div><div class="amb-brands">'+tags+'</div></div><div class="amb-count">'+map[amb].count+' events</div></div>';
+  });
+  html+='</div>';
+  document.getElementById('sched-table-wrap').innerHTML=html;
+}
+
 function renderScheduleTable(){
   var brandF=document.getElementById('sched-filter-brand').value;
   var ambF=document.getElementById('sched-filter-amb').value;
