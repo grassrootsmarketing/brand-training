@@ -15,6 +15,7 @@ export default async function handler(req, res) {
 
     try {
         const body = { ...req.body };
+        body.model = 'claude-sonnet-4-6';
 
         // Remove tools if present (web_search requires newer API version)
         if (body.tools) {
