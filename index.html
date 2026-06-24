@@ -8,6 +8,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/gh/gitbrent/PptxGenJS@3.12.0/dist/pptxgen.bundle.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <style>
 :root {
   --ink:#0d1a0f;--ink2:#162418;--forest:#2d6a4f;--sage:#52b788;--mint:#95d5b2;
@@ -173,7 +174,11 @@ textarea.brand-input:focus{border-color:var(--sage);}
 .empty-g{font-size:3rem;margin-bottom:16px;display:block;opacity:0.35;}
 .empty-title{font-size:15px;font-weight:600;color:var(--text2);margin-bottom:6px;}
 .empty-hint{font-size:13px;}
+
+/* PAGE TOGGLE */
 .ptab.active{background:var(--forest)!important;color:var(--mint)!important;}
+
+/* SCHEDULE TABLE */
 .sched-tbl{width:100%;border-collapse:collapse;font-size:12px;}
 .sched-tbl th{text-align:left;padding:10px 12px;background:var(--ink2);color:var(--sage);font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;border-bottom:1px solid var(--border2);position:sticky;top:0;}
 .sched-tbl td{padding:8px 12px;border-bottom:1px solid var(--border);color:var(--text1);}
@@ -182,14 +187,53 @@ textarea.brand-input:focus{border-color:var(--sage);}
 .sched-tbl .date-cell{color:var(--sage);font-family:'JetBrains Mono',monospace;font-size:11px;}
 .sched-tbl .amb-cell{color:var(--text2);}
 .sched-tbl .venue-cell{color:var(--text2);font-size:11px;}
-.sched-view-btn{opacity:0.5;}
-.sched-view-btn.active{opacity:1;background:var(--forest)!important;color:var(--mint)!important;}
-.amb-summary .amb-name{font-weight:700;color:var(--text1);font-size:14px;}
-.amb-summary .amb-brands{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px;}
-.amb-summary .amb-brand-tag{padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;background:var(--glass2);border:1px solid var(--border);}
-.amb-summary .amb-row{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;}
-.amb-summary .amb-row:hover{background:var(--glass);}
-.amb-summary .amb-count{color:var(--text3);font-size:11px;font-family:'JetBrains Mono',monospace;white-space:nowrap;}
+
+/* SEND TRAINING PAGE */
+.send-step{background:var(--glass);border:1px solid var(--border2);border-radius:14px;padding:24px;margin-bottom:16px;position:relative;}
+.send-step-num{position:absolute;top:24px;left:24px;width:28px;height:28px;border-radius:50%;background:var(--forest);color:var(--mint);font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;}
+.send-step-num.done{background:var(--sage);color:var(--ink);}
+.send-step-title{font-size:16px;font-weight:700;margin-left:40px;margin-bottom:4px;}
+.send-step-sub{font-size:12px;color:var(--text3);margin-left:40px;margin-bottom:16px;}
+.send-upload-drop{border:1.5px dashed var(--border2);border-radius:var(--r);padding:24px;cursor:pointer;transition:all 0.2s;display:flex;align-items:center;gap:16px;background:var(--glass);margin-left:40px;}
+.send-upload-drop:hover{border-color:var(--sage);background:rgba(82,183,136,0.06);}
+.slide-list{margin-left:40px;margin-top:12px;display:flex;flex-direction:column;gap:6px;max-height:300px;overflow-y:auto;}
+.slide-row{display:flex;align-items:center;gap:12px;padding:8px 12px;background:var(--ink2);border:1px solid var(--border);border-radius:var(--r-sm);font-size:12px;}
+.slide-row-num{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text3);min-width:28px;}
+.slide-row-title{flex:1;color:var(--text1);font-weight:600;}
+.slide-row-brand{font-size:11px;padding:2px 10px;border-radius:12px;font-weight:600;}
+.slide-row-brand.matched{background:rgba(45,106,79,0.3);color:var(--mint);border:1px solid rgba(82,183,136,0.25);}
+.slide-row-brand.unmatched{background:rgba(231,111,81,0.1);color:#f4a261;border:1px solid rgba(231,111,81,0.2);}
+
+/* AMBASSADOR PREVIEW CARDS */
+.amb-preview{margin-left:40px;margin-top:12px;display:flex;flex-direction:column;gap:10px;}
+.amb-card{background:var(--ink2);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;transition:border-color 0.2s;}
+.amb-card:hover{border-color:var(--border2);}
+.amb-card-hdr{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;cursor:pointer;user-select:none;}
+.amb-card-name{font-size:14px;font-weight:700;}
+.amb-card-email{font-size:11px;color:var(--text3);font-family:'JetBrains Mono',monospace;}
+.amb-card-meta{display:flex;align-items:center;gap:8px;}
+.amb-card-count{font-size:11px;color:var(--sage);font-family:'JetBrains Mono',monospace;background:rgba(45,106,79,0.2);padding:3px 10px;border-radius:12px;}
+.amb-card-body{padding:0 16px 14px;display:none;border-top:1px solid var(--border);}
+.amb-card.open .amb-card-body{display:block;padding-top:12px;}
+.amb-brand-tag{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;padding:4px 12px;border-radius:16px;background:var(--glass2);border:1px solid var(--border2);color:var(--text2);margin:3px 3px 3px 0;}
+.amb-no-email{color:var(--ember);font-size:11px;font-style:italic;}
+
+/* SEND STATUS */
+.send-status{margin-left:40px;margin-top:12px;}
+.send-row{display:flex;align-items:center;gap:12px;padding:8px 12px;border-bottom:1px solid var(--border);font-size:12px;}
+.send-row:last-child{border-bottom:none;}
+.send-icon{font-size:14px;width:20px;text-align:center;}
+.send-name{font-weight:600;min-width:140px;}
+.send-detail{color:var(--text3);font-family:'JetBrains Mono',monospace;font-size:11px;flex:1;}
+.send-badge{font-size:10px;padding:2px 8px;border-radius:10px;font-weight:600;}
+.send-badge.ok{background:rgba(82,183,136,0.2);color:var(--sage);}
+.send-badge.fail{background:rgba(231,111,81,0.15);color:#f4a261;}
+.send-badge.wait{background:var(--glass2);color:var(--text3);}
+
+/* SUMMARY VIEW */
+.amb-summary-card{background:var(--ink2);border:1px solid var(--border);border-radius:var(--r);padding:14px 18px;display:flex;align-items:flex-start;gap:14px;flex-wrap:wrap;}
+.amb-summary-name{font-size:14px;font-weight:700;min-width:160px;}
+.amb-summary-brands{display:flex;flex-wrap:wrap;gap:5px;flex:1;}
 </style>
 </head>
 <body>
@@ -205,7 +249,7 @@ textarea.brand-input:focus{border-color:var(--sage);}
   </div>
   <div class="topbar-right">
     <div class="live-dot"></div>
-    <div class="tag-badge">INTERNAL · v2</div>
+    <div class="tag-badge">INTERNAL · v3</div>
   </div>
 </div>
 
@@ -215,10 +259,13 @@ textarea.brand-input:focus{border-color:var(--sage);}
   <p class="hero-sub">Drop in your demo schedule and get AI-researched brand cards — story, benefits, ingredients, and talking points — ready in seconds.</p>
 </div>
 
-<div class="page-toggle" style="display:flex;justify-content:center;gap:0;margin:24px auto 0;max-width:420px;background:var(--glass);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;">
+<!-- PAGE TOGGLE -->
+<div class="page-toggle" style="display:flex;justify-content:center;gap:0;margin:24px auto 0;max-width:560px;background:var(--glass);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;">
   <button class="ptab active" id="ptab-cards" onclick="switchPage('cards')" style="flex:1;padding:12px 0;border:none;background:transparent;color:var(--text2);font-size:13px;font-family:'Syne',sans-serif;font-weight:600;cursor:pointer;transition:all .2s;">Training Cards</button>
   <button class="ptab" id="ptab-schedule" onclick="switchPage('schedule')" style="flex:1;padding:12px 0;border:none;background:transparent;color:var(--text2);font-size:13px;font-family:'Syne',sans-serif;font-weight:600;cursor:pointer;transition:all .2s;">Ambassador Schedule</button>
+  <button class="ptab" id="ptab-send" onclick="switchPage('send')" style="flex:1;padding:12px 0;border:none;background:transparent;color:var(--text2);font-size:13px;font-family:'Syne',sans-serif;font-weight:600;cursor:pointer;transition:all .2s;">Send Training</button>
 </div>
+
 <div class="container" id="page-cards">
 
   <!-- INPUT PANEL -->
@@ -297,111 +344,240 @@ textarea.brand-input:focus{border-color:var(--sage);}
 
 </div>
 
+<!-- AMBASSADOR SCHEDULE PAGE -->
 <div class="container" id="page-schedule" style="display:none;">
   <div style="background:var(--glass);border:1px solid var(--border);border-radius:var(--r);padding:24px;margin-top:12px;">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:12px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px;">
       <div>
         <div style="font-size:18px;font-weight:700;color:var(--text1);">Ambassador Schedule</div>
         <div style="font-size:12px;color:var(--text3);margin-top:4px;" id="sched-meta">Upload a Promomash export to see the schedule</div>
       </div>
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-        <select id="sched-filter-brand" onchange="if(typeof schedView!=='undefined'&&schedView==='summary')renderAmbassadorSummary();else renderScheduleTable();" style="padding:6px 10px;background:var(--ink2);border:1px solid var(--border2);border-radius:var(--r-sm);color:var(--text1);font-size:12px;font-family:'Syne',sans-serif;"><option value="">All brands</option></select>
-        <select id="sched-filter-amb" onchange="if(typeof schedView!=='undefined'&&schedView==='summary')renderAmbassadorSummary();else renderScheduleTable();" style="padding:6px 10px;background:var(--ink2);border:1px solid var(--border2);border-radius:var(--r-sm);color:var(--text1);font-size:12px;font-family:'Syne',sans-serif;"><option value="">All ambassadors</option></select>
-        <button class="btn sched-view-btn active" id="sv-full" onclick="setSchedView('full')" style="font-size:11px;padding:5px 10px;">Full Schedule</button><button class="btn sched-view-btn" id="sv-summary" onclick="setSchedView('summary')" style="font-size:11px;padding:5px 10px;">By Ambassador</button><button class="btn" onclick="document.getElementById('sched-fin').click()" style="font-size:12px;">Upload schedule</button>
+        <div style="display:flex;gap:0;border:1px solid var(--border2);border-radius:var(--r-sm);overflow:hidden;">
+          <button class="itab active" id="sv-full" onclick="setSchedView('full')" style="padding:6px 14px;font-size:11px;">Full Schedule</button>
+          <button class="itab" id="sv-summary" onclick="setSchedView('summary')" style="padding:6px 14px;font-size:11px;">By Ambassador</button>
+        </div>
+        <select id="sched-filter-brand" onchange="renderScheduleView()" style="padding:6px 10px;background:var(--ink2);border:1px solid var(--border2);border-radius:var(--r-sm);color:var(--text1);font-size:12px;font-family:'Syne',sans-serif;">
+          <option value="">All brands</option>
+        </select>
+        <select id="sched-filter-amb" onchange="renderScheduleView()" style="padding:6px 10px;background:var(--ink2);border:1px solid var(--border2);border-radius:var(--r-sm);color:var(--text1);font-size:12px;font-family:'Syne',sans-serif;">
+          <option value="">All ambassadors</option>
+        </select>
+        <button class="btn" onclick="document.getElementById('sched-fin').click()" style="font-size:12px;">Upload schedule</button>
         <input type="file" id="sched-fin" accept=".csv,.xlsx,.xls" style="display:none">
       </div>
     </div>
-    <div id="sched-table-wrap" style="overflow-x:auto;max-height:600px;overflow-y:auto;">
-      <div style="text-align:center;padding:40px;color:var(--text3);font-size:13px;">Upload a Promomash schedule export to populate this view.</div>
+    <div id="sched-table-wrap" style="overflow-x:auto;">
+      <div style="text-align:center;padding:40px;color:var(--text3);font-size:13px;">Upload a Promomash schedule export (.xlsx or .csv) to populate this view.</div>
     </div>
   </div>
 </div>
 
-<script>
+<!-- SEND TRAINING PAGE -->
+<div class="container" id="page-send" style="display:none;">
 
+  <!-- STEP 1: Upload Training PPTX -->
+  <div class="send-step" id="send-step-1">
+    <div class="send-step-num" id="ss1n">1</div>
+    <div class="send-step-title">Upload Training Deck</div>
+    <div class="send-step-sub">Upload your polished PowerPoint with one or more slides per brand. Slide titles are matched to brand names.</div>
+    <div class="send-upload-drop" id="pptx-dropzone" onclick="document.getElementById('pptx-fin').click()">
+      <div class="drop-icon">💊</div>
+      <div>
+        <div class="drop-title">Upload .pptx file</div>
+        <div class="drop-sub">Drag and drop or click to browse</div>
+      </div>
+    </div>
+    <input type="file" id="pptx-fin" accept=".pptx" style="display:none">
+    <div id="pptx-slides-list" class="slide-list" style="display:none;"></div>
+    <div id="pptx-summary" style="display:none;margin-left:40px;margin-top:12px;padding:12px 16px;background:var(--ink2);border:1px solid var(--border);border-radius:var(--r-sm);font-size:12px;color:var(--text2);"></div>
+  </div>
+
+  <!-- STEP 2: Ambassador Contacts -->
+  <div class="send-step" id="send-step-2">
+    <div class="send-step-num" id="ss2n">2</div>
+    <div class="send-step-title">Ambassador Contacts</div>
+    <div class="send-step-sub">Upload an XLSX with ambassador names and emails, or they will be loaded from the schedule if available.</div>
+    <div class="send-upload-drop" id="contacts-dropzone" onclick="document.getElementById('contacts-fin').click()">
+      <div class="drop-icon">👥</div>
+      <div>
+        <div class="drop-title">Upload contacts XLSX</div>
+        <div class="drop-sub">Needs: Name, Email columns</div>
+      </div>
+    </div>
+    <input type="file" id="contacts-fin" accept=".xlsx,.xls,.csv" style="display:none">
+    <div id="contacts-preview" style="display:none;margin-left:40px;margin-top:12px;font-size:12px;"></div>
+  </div>
+
+  <!-- STEP 3: Schedule Check -->
+  <div class="send-step" id="send-step-3">
+    <div class="send-step-num" id="ss3n">3</div>
+    <div class="send-step-title">Schedule Data</div>
+    <div class="send-step-sub">The Promomash schedule tells us which ambassador works which brands this month.</div>
+    <div id="schedule-check" style="margin-left:40px;font-size:13px;color:var(--text2);">
+      <span style="color:var(--ember);">No schedule loaded.</span> Upload a Promomash export from the "Training Cards" or "Ambassador Schedule" tab first.
+    </div>
+  </div>
+
+  <!-- STEP 4: Review & Send -->
+  <div class="send-step" id="send-step-4" style="display:none;">
+    <div class="send-step-num" id="ss4n">4</div>
+    <div class="send-step-title">Review Assignments</div>
+    <div class="send-step-sub">Each ambassador receives ONLY the slides for brands they are representing this month.</div>
+    <div style="margin-left:40px;margin-bottom:12px;display:flex;gap:8px;flex-wrap:wrap;">
+      <button class="btn btn-go" id="send-dl-all" onclick="downloadAllZip()">⬇ Download All as ZIP</button>
+      <button class="btn btn-go" id="send-email-all" onclick="sendAllEmails()" style="background:var(--sage);color:var(--ink);">✉ Email All Ambassadors</button>
+    </div>
+    <div id="amb-preview-area" class="amb-preview"></div>
+    <div id="send-status-area" class="send-status" style="display:none;"></div>
+  </div>
+
+</div>
+
+<script>
+// ===================== PAGE SWITCHING =====================
 function switchPage(page){
   document.getElementById('page-cards').style.display=page==='cards'?'':'none';
   document.getElementById('page-schedule').style.display=page==='schedule'?'':'none';
+  document.getElementById('page-send').style.display=page==='send'?'':'none';
   document.getElementById('ptab-cards').classList.toggle('active',page==='cards');
   document.getElementById('ptab-schedule').classList.toggle('active',page==='schedule');
-}
-let scheduleRows=[];
-function processScheduleFile(file){
-  var ext=file.name.split('.').pop().toLowerCase();
-  if(ext==='csv'){Papa.parse(file,{header:true,skipEmptyLines:true,complete:function(r){loadScheduleData(r.data,file.name);}});}
-  else{var reader=new FileReader();reader.onload=function(e){var wb=XLSX.read(e.target.result,{type:'array',cellDates:true});var ws=wb.Sheets[wb.SheetNames[0]];loadScheduleData(XLSX.utils.sheet_to_json(ws,{defval:'',raw:false}),file.name);};reader.readAsArrayBuffer(file);}
-}
-function loadScheduleData(data,fname){
-  if(!data||!data.length)return;
-  var keys=Object.keys(data[0]);
-  var dateCol=keys.find(function(k){return/start date/i.test(k);})||keys.find(function(k){return/date/i.test(k);});
-  var timeCol=keys.find(function(k){return/start time/i.test(k);});
-  var endCol=keys.find(function(k){return/end time/i.test(k);});
-  var ambCol=keys.find(function(k){return/user name/i.test(k);})||keys.find(function(k){return/ambassador|rep/i.test(k);});
-  var brandCol=keys.find(function(k){return/campaign name/i.test(k);})||keys.find(function(k){return/brand|campaign/i.test(k);});
-  var venueCol=keys.find(function(k){return/venue name/i.test(k);})||keys.find(function(k){return/venue|store|location/i.test(k);});
-  var cityCol=keys.find(function(k){return/venue city/i.test(k);})||keys.find(function(k){return/city/i.test(k);});
-  var stateCol=keys.find(function(k){return/venue state/i.test(k);})||keys.find(function(k){return/state/i.test(k);});
-  scheduleRows=data.map(function(r){
-    var d=(r[dateCol]||'').toString();
-    if(d.includes('T'))try{d=new Date(d).toLocaleDateString('en-US',{month:'short',day:'numeric'});}catch(e){}
-    else if(d.length>10)d=d.substring(0,10);
-    return{date:d,time:(r[timeCol]||'').toString(),endTime:(r[endCol]||'').toString(),ambassador:(r[ambCol]||'').toString().trim(),brand:(r[brandCol]||'').toString().trim(),venue:(r[venueCol]||'').toString().trim(),city:(r[cityCol]||'').toString().trim(),state:(r[stateCol]||'').toString().trim()};
-  }).filter(function(r){return r.ambassador&&r.brand;}).sort(function(a,b){if(a.date<b.date)return -1;if(a.date>b.date)return 1;return a.ambassador.localeCompare(b.ambassador);});
-  var brands=[...new Set(scheduleRows.map(function(r){return r.brand;}))].sort();
-  var ambs=[...new Set(scheduleRows.map(function(r){return r.ambassador;}))].sort();
-  document.getElementById('sched-filter-brand').innerHTML='<option value="">All brands ('+brands.length+')</option>'+brands.map(function(b){return'<option value="'+b+'">'+b+'</option>';}).join('');
-  document.getElementById('sched-filter-amb').innerHTML='<option value="">All ambassadors ('+ambs.length+')</option>'+ambs.map(function(a){return'<option value="'+a+'">'+a+'</option>';}).join('');
-  document.getElementById('sched-meta').innerHTML='<strong>'+scheduleRows.length+'</strong> events \u00b7 <strong>'+ambs.length+'</strong> ambassadors \u00b7 <strong>'+brands.length+'</strong> brands \u00b7 '+fname;
-  renderScheduleTable();
+  document.getElementById('ptab-send').classList.toggle('active',page==='send');
+  if(page==='send') refreshSendPage();
 }
 
-var schedView='full';
+// ===================== SCHEDULE DATA =====================
+let scheduleRows=[];
+let schedView='full';
+
 function setSchedView(v){
   schedView=v;
   document.getElementById('sv-full').classList.toggle('active',v==='full');
   document.getElementById('sv-summary').classList.toggle('active',v==='summary');
-  if(v==='full')renderScheduleTable();
+  renderScheduleView();
+}
+
+function renderScheduleView(){
+  if(schedView==='full') renderScheduleTable();
   else renderAmbassadorSummary();
 }
-function renderAmbassadorSummary(){
-  if(!scheduleRows.length){document.getElementById('sched-table-wrap').innerHTML='<div style="text-align:center;padding:40px;color:var(--text3);">Upload a schedule first.</div>';return;}
-  var brandF=document.getElementById('sched-filter-brand').value;
-  var ambF=document.getElementById('sched-filter-amb').value;
-  var rows=scheduleRows;
-  if(brandF)rows=rows.filter(function(r){return r.brand===brandF;});
-  if(ambF)rows=rows.filter(function(r){return r.ambassador===ambF;});
-  var map={};
-  rows.forEach(function(r){
-    if(!map[r.ambassador])map[r.ambassador]={brands:{},count:0};
-    map[r.ambassador].brands[r.brand]=(map[r.ambassador].brands[r.brand]||0)+1;
-    map[r.ambassador].count++;
+
+function processScheduleFile(file){
+  const ext=file.name.split('.').pop().toLowerCase();
+  if(ext==='csv'){
+    Papa.parse(file,{header:true,skipEmptyLines:true,complete:r=>loadScheduleData(r.data,file.name)});
+  } else {
+    const reader=new FileReader();
+    reader.onload=e=>{
+      const wb=XLSX.read(e.target.result,{type:'array',cellDates:true});
+      const ws=wb.Sheets[wb.SheetNames[0]];
+      loadScheduleData(XLSX.utils.sheet_to_json(ws,{defval:'',raw:false}),file.name);
+    };
+    reader.readAsArrayBuffer(file);
+  }
+}
+
+function loadScheduleData(data,fname){
+  if(!data||!data.length){alert('No data found.');return;}
+  const keys=Object.keys(data[0]);
+  const dateCol=keys.find(k=>/start date/i.test(k))||keys.find(k=>/date/i.test(k));
+  const timeCol=keys.find(k=>/start time/i.test(k));
+  const endCol=keys.find(k=>/end time/i.test(k));
+  const ambCol=keys.find(k=>/user name/i.test(k))||keys.find(k=>/ambassador|rep/i.test(k));
+  const brandCol=keys.find(k=>/campaign name/i.test(k))||keys.find(k=>/brand|campaign/i.test(k));
+  const venueCol=keys.find(k=>/venue name/i.test(k))||keys.find(k=>/venue|store|location/i.test(k));
+  const cityCol=keys.find(k=>/venue city/i.test(k))||keys.find(k=>/city/i.test(k));
+  const stateCol=keys.find(k=>/venue state/i.test(k))||keys.find(k=>/state/i.test(k));
+  const statusCol=keys.find(k=>/^status$/i.test(k))||keys.find(k=>/event status/i.test(k));
+
+  scheduleRows=data.map(r=>{
+    let d=r[dateCol]||'';
+    if(d instanceof Date) d=d.toLocaleDateString('en-US',{month:'short',day:'numeric'});
+    else if(typeof d==='string'&&d.includes('T')) d=new Date(d).toLocaleDateString('en-US',{month:'short',day:'numeric'});
+    else if(typeof d==='string'&&d.length>10) d=d.substring(0,10);
+    return {
+      date:d,
+      time:(r[timeCol]||'').toString(),
+      endTime:(r[endCol]||'').toString(),
+      ambassador:(r[ambCol]||'').toString().trim(),
+      brand:(r[brandCol]||'').toString().trim(),
+      venue:(r[venueCol]||'').toString().trim(),
+      city:(r[cityCol]||'').toString().trim(),
+      state:(r[stateCol]||'').toString().trim(),
+      status:(r[statusCol]||'').toString().trim()
+    };
+  }).filter(r=>r.ambassador&&r.brand).sort((a,b)=>{
+    if(a.date<b.date)return -1;if(a.date>b.date)return 1;
+    return a.ambassador.localeCompare(b.ambassador);
   });
-  var sorted=Object.keys(map).sort();
-  if(!sorted.length){document.getElementById('sched-table-wrap').innerHTML='<div style="text-align:center;padding:40px;color:var(--text3);">No events match filters.</div>';return;}
-  var html='<div class="amb-summary">';
-  sorted.forEach(function(amb){
-    var brands=Object.keys(map[amb].brands).sort();
-    var tags=brands.map(function(b){return '<span class="amb-brand-tag" style="color:'+bColor(b)+';">'+b+' <span style="opacity:0.5;">('+map[amb].brands[b]+')</span></span>';}).join('');
-    html+='<div class="amb-row"><div><div class="amb-name">'+amb+'</div><div class="amb-brands">'+tags+'</div></div><div class="amb-count">'+map[amb].count+' events</div></div>';
+
+  const brands=[...new Set(scheduleRows.map(r=>r.brand))].sort();
+  const ambs=[...new Set(scheduleRows.map(r=>r.ambassador))].sort();
+  const bf=document.getElementById('sched-filter-brand');
+  bf.innerHTML='<option value="">All brands ('+brands.length+')</option>'+brands.map(b=>'<option value="'+b+'">'+b+'</option>').join('');
+  const af=document.getElementById('sched-filter-amb');
+  af.innerHTML='<option value="">All ambassadors ('+ambs.length+')</option>'+ambs.map(a=>'<option value="'+a+'">'+a+'</option>').join('');
+
+  document.getElementById('sched-meta').innerHTML='<strong>'+scheduleRows.length+'</strong> events · <strong>'+ambs.length+'</strong> ambassadors · <strong>'+brands.length+'</strong> brands · '+fname;
+  renderScheduleView();
+}
+
+function renderScheduleTable(){
+  const brandF=document.getElementById('sched-filter-brand').value;
+  const ambF=document.getElementById('sched-filter-amb').value;
+  let rows=scheduleRows;
+  if(brandF)rows=rows.filter(r=>r.brand===brandF);
+  if(ambF)rows=rows.filter(r=>r.ambassador===ambF);
+
+  if(!rows.length){
+    document.getElementById('sched-table-wrap').innerHTML='<div style="text-align:center;padding:40px;color:var(--text3);">No events match the current filters.</div>';
+    return;
+  }
+
+  let html='<table class="sched-tbl"><thead><tr><th>Date</th><th>Time</th><th>Ambassador</th><th>Brand</th><th>Store</th><th>Location</th></tr></thead><tbody>';
+  rows.forEach(r=>{
+    const loc=[r.city,r.state].filter(Boolean).join(', ');
+    html+=`<tr><td class="date-cell">${r.date}</td><td class="date-cell">${r.time}${r.endTime?' – '+r.endTime:''}</td><td class="amb-cell">${r.ambassador}</td><td class="brand-cell" style="color:${bColor(r.brand)}">${r.brand}</td><td class="venue-cell">${r.venue}</td><td class="venue-cell">${loc}</td></tr>`;
+  });
+  html+='</tbody></table>';
+  document.getElementById('sched-table-wrap').innerHTML=html;
+}
+
+function renderAmbassadorSummary(){
+  const brandF=document.getElementById('sched-filter-brand').value;
+  const ambF=document.getElementById('sched-filter-amb').value;
+  let rows=scheduleRows;
+  if(brandF)rows=rows.filter(r=>r.brand===brandF);
+  if(ambF)rows=rows.filter(r=>r.ambassador===ambF);
+
+  const ambMap={};
+  rows.forEach(r=>{
+    if(!ambMap[r.ambassador]) ambMap[r.ambassador]={brands:new Set(),events:0};
+    ambMap[r.ambassador].brands.add(r.brand);
+    ambMap[r.ambassador].events++;
+  });
+
+  const sorted=Object.entries(ambMap).sort((a,b)=>a[0].localeCompare(b[0]));
+  if(!sorted.length){
+    document.getElementById('sched-table-wrap').innerHTML='<div style="text-align:center;padding:40px;color:var(--text3);">No ambassadors match the current filters.</div>';
+    return;
+  }
+
+  let html='<div style="display:flex;flex-direction:column;gap:8px;">';
+  sorted.forEach(([name,info])=>{
+    const brandTags=[...info.brands].sort().map(b=>`<span class="amb-brand-tag"><span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:${bColor(b)}"></span>${b}</span>`).join('');
+    html+=`<div class="amb-summary-card">
+      <div class="amb-summary-name">${name}</div>
+      <div class="amb-summary-brands">${brandTags}</div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text3);white-space:nowrap;">${info.events} events · ${info.brands.size} brands</div>
+    </div>`;
   });
   html+='</div>';
   document.getElementById('sched-table-wrap').innerHTML=html;
 }
 
-function renderScheduleTable(){
-  var brandF=document.getElementById('sched-filter-brand').value;
-  var ambF=document.getElementById('sched-filter-amb').value;
-  var rows=scheduleRows;
-  if(brandF)rows=rows.filter(function(r){return r.brand===brandF;});
-  if(ambF)rows=rows.filter(function(r){return r.ambassador===ambF;});
-  if(!rows.length){document.getElementById('sched-table-wrap').innerHTML='<div style="text-align:center;padding:40px;color:var(--text3);">No events match filters.</div>';return;}
-  var html='<table class="sched-tbl"><thead><tr><th>Date</th><th>Time</th><th>Ambassador</th><th>Brand</th><th>Store</th><th>Location</th></tr></thead><tbody>';
-  rows.forEach(function(r){var loc=[r.city,r.state].filter(Boolean).join(', ');html+='<tr><td class="date-cell">'+r.date+'</td><td class="date-cell">'+r.time+(r.endTime?' \u2013 '+r.endTime:'')+'</td><td class="amb-cell">'+r.ambassador+'</td><td class="brand-cell" style="color:'+bColor(r.brand)+'">'+r.brand+'</td><td class="venue-cell">'+r.venue+'</td><td class="venue-cell">'+loc+'</td></tr>';});
-  html+='</tbody></table>';
-  document.getElementById('sched-table-wrap').innerHTML=html;
-}
-document.getElementById('sched-fin').addEventListener('change',function(e){if(e.target.files[0])processScheduleFile(e.target.files[0]);});
+// Schedule file input
+document.getElementById('sched-fin').addEventListener('change',e=>{if(e.target.files[0])processScheduleFile(e.target.files[0]);});
 
 const DEFAULTS=[
   {name:'MaryRuth Organics',color:'#e63946'},
@@ -429,9 +605,10 @@ let allBrands=[],selBrands=[];
 // Tab switching
 function switchTab(t){
   document.querySelectorAll('.itab').forEach((el,i)=>{
-    el.classList.toggle('active',['upload','text','defaults'][i]===t);
+    if(el.closest('.input-tabs'))
+      el.classList.toggle('active',['upload','text','defaults'][i]===t);
   });
-  document.querySelectorAll('.tab-panel').forEach(el=>el.classList.remove('active'));
+  document.querySelectorAll('#input-panel .tab-panel').forEach(el=>el.classList.remove('active'));
   document.getElementById('tab-'+t).classList.add('active');
 }
 
@@ -461,46 +638,30 @@ function processFile(file){
 function extractBrands(data,fname){
   if(!data||!data.length){alert('No data found in file.');return;}
   const keys=Object.keys(data[0]);
-
-  // Priority order — Promomash first, then generic fallbacks
   const priority=[
     'CAMPAIGN NAME','Campaign Name','campaign name','campaign_name',
-    'brand','Brand','BRAND',
-    'client','Client','CLIENT',
-    'brand name','Brand Name','BRAND NAME',
-    'company','Company','COMPANY',
+    'brand','Brand','BRAND','client','Client','CLIENT',
+    'brand name','Brand Name','BRAND NAME','company','Company','COMPANY',
     'Account','account','ACCOUNT',
   ];
-
   let col=priority.find(c=>keys.includes(c));
-  // fuzzy fallback
   if(!col) col=keys.find(k=>/campaign|brand|client|company|account/i.test(k));
-
   if(!col){
     alert(`Could not find a brand column.\n\nColumns found: ${keys.slice(0,8).join(', ')}\n\nTry the "Type brand names" tab instead.`);
     return;
   }
-
   const unique=[...new Set(data.map(r=>(r[col]||'').toString().trim()).filter(Boolean))].sort();
   if(!unique.length){alert('No brand names found in column: '+col);return;}
   setBrands(unique,`<strong>${unique.length}</strong> brands from <strong>${col}</strong> · ${data.length} rows · ${fname}`);
 }
 
-// Text input parsing
 function parseTextInput(){
   const raw=document.getElementById('brand-textarea').value.trim();
   if(!raw){return;}
-  // Split on newlines or commas, clean up
-  const brands=[...new Set(
-    raw.split(/[\n,]+/)
-      .map(s=>s.trim())
-      .filter(s=>s.length>1)
-  )].sort();
+  const brands=[...new Set(raw.split(/[\n,]+/).map(s=>s.trim()).filter(s=>s.length>1))].sort();
   if(!brands.length){alert('No brand names detected.');return;}
-  // show preview
   document.getElementById('parsed-preview').innerHTML=brands.map(b=>`
     <span class="parsed-pill"><span class="ppd" style="background:${bColor(b)}"></span>${b}</span>`).join('');
-  // short delay then set
   setTimeout(()=>setBrands(brands,`<strong>${brands.length}</strong> brands from text input`),300);
 }
 
@@ -565,7 +726,7 @@ async function generateAll(){
   if(brandData.length>0){
     const bar=document.createElement('div');bar.id='dl-bar';
     bar.style.cssText='display:flex;align-items:center;justify-content:center;gap:16px;padding:20px;margin:24px auto 0;max-width:740px;background:var(--glass2);border:1px solid var(--border2);border-radius:var(--r);';
-    bar.innerHTML=`<span style="color:var(--text2);font-size:14px;">\u2705 ${brandData.length} brand${brandData.length>1?'s':''} researched</span><button class="btn" onclick="downloadPptx()" style="background:var(--forest);color:var(--mint);font-weight:600;">\u2B07 Download PowerPoint</button>`;
+    bar.innerHTML=`<span style="color:var(--text2);font-size:14px;">✅ ${brandData.length} brand${brandData.length>1?'s':''} researched</span><button class="btn" onclick="downloadPptx()" style="background:var(--forest);color:var(--mint);font-weight:600;">⬇ Download PowerPoint</button>`;
     out.parentNode.insertBefore(bar,out);
   }
 }
@@ -610,17 +771,8 @@ Return ONLY a valid JSON object — no markdown, no backticks, nothing else:
     const s=text.indexOf('{'),e=text.lastIndexOf('}');
     if(s===-1)throw new Error('No JSON in response');
     let raw=text.slice(s,e+1);
-    raw=raw.replace(/,\s*([}\]])/g,'$1');
-    raw=raw.replace(/[\x00-\x1f]/g,' ');
-    let parsed;
-    try{parsed=JSON.parse(raw);}
-    catch(e2){
-      raw=raw.replace(/\n/g,' ').replace(/\t/g,' ');
-      raw=raw.replace(/"([^"]*)"\s*:\s*"((?:[^"\\]|\\.)*)(?:"|$)/g, function(m,k,v){
-        return '"'+k+'":"'+v.replace(/"/g,"'")+'"';
-      });
-      parsed=JSON.parse(raw);
-    }
+    raw=raw.replace(/,\s*([}\]])/g,'$1').replace(/[\x00-\x1f]/g,' ').replace(/([^\\])\\([^"\\\/bfnrtu])/g,'$1\\\\$2');
+    let parsed;try{parsed=JSON.parse(raw);}catch(e2){raw=raw.replace(/"([^"]*)"(\s*:\s*")((?:[^"\\]|\\.)*)"/g,function(m,k,sep,v){return '"'+k+'"'+sep+v.replace(/(?<!\\)"/g,'\\"')+'"';});parsed=JSON.parse(raw);}
     brandData.push(parsed);
     render(id,parsed);
   }catch(err){
@@ -686,61 +838,623 @@ function downloadPptx(){
   pptx.layout='LAYOUT_WIDE';
   pptx.defineSlideMaster({title:'GRASSROOTS',background:{color:'0D1A0F'},objects:[
     {rect:{x:0,y:0,w:'100%',h:0.55,fill:{color:'162418'}}},
-    {text:{text:'GRASSROOTS',options:{x:0.5,y:0.12,w:2,h:0.3,fontSize:10,fontFace:'Arial',color:'52B788',bold:true}}},
+    {text:{text:'GRASSROOTS',options:{x:0.5,y:0.12,w:2,h:0.3,fontSize:10,fontFace:'Arial',color:'52B788',bold:true,letterSpacing:3}}},
     {text:{text:'Brand Training Agent',options:{x:2.6,y:0.12,w:2,h:0.3,fontSize:9,fontFace:'Arial',color:'6B6452'}}},
     {line:{x1:0.5,y1:7.2,x2:12.8,y2:7.2,line:{color:'2D6A4F',width:0.5}}},
-    {text:{text:'INTERNAL',options:{x:0.5,y:7.25,w:4,h:0.25,fontSize:7,fontFace:'Arial',color:'6B6452'}}}
+    {text:{text:'INTERNAL · GRASSROOTS MARKETING LLC',options:{x:0.5,y:7.25,w:4,h:0.25,fontSize:7,fontFace:'Arial',color:'6B6452'}}}
   ]});
+
   const ts=pptx.addSlide({masterName:'GRASSROOTS'});
   ts.addText('Brand Training\nCards',{x:0.8,y:1.5,w:8,h:2.5,fontSize:44,fontFace:'Arial',color:'F0ECE2',bold:true,lineSpacingMultiple:1.1});
-  ts.addText(brandData.length+' brand'+(brandData.length>1?'s':'')+' \u00b7 '+new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'}),{x:0.8,y:4.0,w:6,h:0.4,fontSize:14,fontFace:'Arial',color:'52B788'});
+  ts.addText(brandData.length+' brand'+(brandData.length>1?'s':'')+' · '+new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'}),{x:0.8,y:4.0,w:6,h:0.4,fontSize:14,fontFace:'Arial',color:'52B788'});
   ts.addShape(pptx.shapes.RECTANGLE,{x:0.8,y:3.8,w:2,h:0.04,fill:{color:'2D6A4F'}});
+
   brandData.forEach(function(d,bi){
-    var ac=bColor(d.brand).replace('#','');
-    var s1=pptx.addSlide({masterName:'GRASSROOTS'});
+    const ac=bColor(d.brand).replace('#','');
+    const s1=pptx.addSlide({masterName:'GRASSROOTS'});
     s1.addShape(pptx.shapes.RECTANGLE,{x:0,y:0.55,w:0.06,h:1.2,fill:{color:ac}});
-    s1.addText('BRAND STORY',{x:0.5,y:0.7,w:3,h:0.3,fontSize:8,fontFace:'Arial',color:ac,bold:true});
+    s1.addText('BRAND STORY',{x:0.5,y:0.7,w:3,h:0.3,fontSize:8,fontFace:'Arial',color:ac,bold:true,letterSpacing:3});
     s1.addText(d.brand,{x:0.5,y:1.0,w:8,h:0.6,fontSize:28,fontFace:'Arial',color:'F0ECE2',bold:true});
-    if(d.tagline)s1.addText('\u201c'+d.tagline+'\u201d',{x:0.5,y:1.6,w:8,h:0.35,fontSize:12,fontFace:'Arial',color:ac,italic:true});
-    var rows1=[];
-    if(d.founded)rows1.push([{text:'Founded',options:{bold:true,color:'A89F8A',fontSize:9}},{text:d.founded,options:{color:'F0ECE2',fontSize:9}}]);
-    if(d.targetAudience)rows1.push([{text:'Audience',options:{bold:true,color:'A89F8A',fontSize:9}},{text:d.targetAudience,options:{color:'F0ECE2',fontSize:9}}]);
-    if(d.mission)rows1.push([{text:'Mission',options:{bold:true,color:'A89F8A',fontSize:9}},{text:d.mission,options:{color:'F0ECE2',fontSize:9}}]);
-    if(d.productFocus)rows1.push([{text:'Products',options:{bold:true,color:'A89F8A',fontSize:9}},{text:d.productFocus,options:{color:'F0ECE2',fontSize:9}}]);
-    if(rows1.length)s1.addTable(rows1,{x:0.5,y:2.1,w:12,colW:[1.4,10.6],border:{type:'none'},rowH:0.45,color:'F0ECE2',fill:{color:'162418'}});
-    var bens=(d.keyBenefits||[]).join('  \u00b7  ');
-    var bY=rows1.length?2.1+rows1.length*0.45+0.2:4.0;
-    if(bens)s1.addText('KEY BENEFITS:  '+bens,{x:0.5,y:bY,w:12,h:0.35,fontSize:9,fontFace:'Arial',color:'95D5B2'});
-    var certs=(d.certifications||[]).join('  \u00b7  ');
+    if(d.tagline)s1.addText('"'+d.tagline+'"',{x:0.5,y:1.6,w:8,h:0.35,fontSize:12,fontFace:'Arial',color:ac,italic:true});
+    const rows1=[];
+    if(d.founded)rows1.push([{text:'Founded',options:{bold:true,color:'A89F8A',fontSize:9,fontFace:'Arial'}},{text:d.founded,options:{color:'F0ECE2',fontSize:9,fontFace:'Arial'}}]);
+    if(d.targetAudience)rows1.push([{text:'Audience',options:{bold:true,color:'A89F8A',fontSize:9,fontFace:'Arial'}},{text:d.targetAudience,options:{color:'F0ECE2',fontSize:9,fontFace:'Arial'}}]);
+    if(d.mission)rows1.push([{text:'Mission',options:{bold:true,color:'A89F8A',fontSize:9,fontFace:'Arial'}},{text:d.mission,options:{color:'F0ECE2',fontSize:9,fontFace:'Arial'}}]);
+    if(d.productFocus)rows1.push([{text:'Products',options:{bold:true,color:'A89F8A',fontSize:9,fontFace:'Arial'}},{text:d.productFocus,options:{color:'F0ECE2',fontSize:9,fontFace:'Arial'}}]);
+    if(rows1.length)s1.addTable(rows1,{x:0.5,y:2.1,w:12,colW:[1.4,10.6],border:{type:'none'},rowH:0.45,autoPage:false,color:'F0ECE2',fill:{color:'162418'}});
+    const bens=(d.keyBenefits||[]).join('  ·  ');
+    if(bens)s1.addText('KEY BENEFITS:  '+bens,{x:0.5,y:rows1.length?2.1+rows1.length*0.45+0.2:4.0,w:12,h:0.35,fontSize:9,fontFace:'Arial',color:'95D5B2',bold:false});
+    const certs=(d.certifications||[]).join('  ·  ');
+    const bY=rows1.length?2.1+rows1.length*0.45+0.2:4.0;
     if(certs)s1.addText('CERTIFICATIONS:  '+certs,{x:0.5,y:bY+0.4,w:12,h:0.35,fontSize:9,fontFace:'Arial',color:'A89F8A'});
-    var s2=pptx.addSlide({masterName:'GRASSROOTS'});
+
+    const s2=pptx.addSlide({masterName:'GRASSROOTS'});
     s2.addShape(pptx.shapes.RECTANGLE,{x:0,y:0.55,w:0.06,h:1.2,fill:{color:ac}});
-    s2.addText('TALKING POINTS',{x:0.5,y:0.7,w:3,h:0.3,fontSize:8,fontFace:'Arial',color:ac,bold:true});
+    s2.addText('TALKING POINTS',{x:0.5,y:0.7,w:3,h:0.3,fontSize:8,fontFace:'Arial',color:ac,bold:true,letterSpacing:3});
     s2.addText(d.brand,{x:0.5,y:1.0,w:8,h:0.6,fontSize:28,fontFace:'Arial',color:'F0ECE2',bold:true});
     s2.addText('What to say to shoppers at the shelf:',{x:0.5,y:1.6,w:8,h:0.3,fontSize:10,fontFace:'Arial',color:'A89F8A',italic:true});
     (d.talkingPoints||[]).forEach(function(tp,ti){
-      var tpY=2.1+ti*0.9;
+      const tpY=2.1+ti*0.9;
       s2.addShape(pptx.shapes.OVAL,{x:0.5,y:tpY+0.05,w:0.35,h:0.35,fill:{color:ac}});
       s2.addText(''+(ti+1),{x:0.5,y:tpY+0.05,w:0.35,h:0.35,fontSize:11,fontFace:'Arial',color:'0D1A0F',bold:true,align:'center',valign:'middle'});
       s2.addText(tp,{x:1.1,y:tpY,w:11.2,h:0.6,fontSize:12,fontFace:'Arial',color:'F0ECE2',valign:'top'});
     });
     if(d.categoryContext){
-      var ctxY=2.1+(d.talkingPoints||[]).length*0.9+0.3;
+      const ctxY=2.1+(d.talkingPoints||[]).length*0.9+0.3;
       s2.addShape(pptx.shapes.RECTANGLE,{x:0.5,y:ctxY,w:12,h:0.03,fill:{color:'2D6A4F'}});
-      s2.addText('CATEGORY CONTEXT',{x:0.5,y:ctxY+0.15,w:3,h:0.25,fontSize:8,fontFace:'Arial',color:ac,bold:true});
+      s2.addText('CATEGORY CONTEXT',{x:0.5,y:ctxY+0.15,w:3,h:0.25,fontSize:8,fontFace:'Arial',color:ac,bold:true,letterSpacing:2});
       s2.addText(d.categoryContext,{x:0.5,y:ctxY+0.4,w:12,h:0.5,fontSize:10,fontFace:'Arial',color:'A89F8A'});
     }
+
     if(d.ingredients&&d.ingredients.length){
-      var s3=pptx.addSlide({masterName:'GRASSROOTS'});
+      const s3=pptx.addSlide({masterName:'GRASSROOTS'});
       s3.addShape(pptx.shapes.RECTANGLE,{x:0,y:0.55,w:0.06,h:1.2,fill:{color:ac}});
-      s3.addText('KEY INGREDIENTS',{x:0.5,y:0.7,w:3,h:0.3,fontSize:8,fontFace:'Arial',color:ac,bold:true});
+      s3.addText('KEY INGREDIENTS',{x:0.5,y:0.7,w:3,h:0.3,fontSize:8,fontFace:'Arial',color:ac,bold:true,letterSpacing:3});
       s3.addText(d.brand,{x:0.5,y:1.0,w:8,h:0.6,fontSize:28,fontFace:'Arial',color:'F0ECE2',bold:true});
-      var hdr=[[{text:'Ingredient',options:{bold:true,color:'95D5B2',fontSize:10,fill:{color:'1A2E1F'}}},{text:'What it does',options:{bold:true,color:'95D5B2',fontSize:10,fill:{color:'1A2E1F'}}}]];
-      var iRows=d.ingredients.map(function(ing){return [{text:ing.name,options:{bold:true,color:'F0ECE2',fontSize:10,fill:{color:'162418'}}},{text:ing.benefit,options:{color:'A89F8A',fontSize:10,fill:{color:'162418'}}}];});
-      s3.addTable(hdr.concat(iRows),{x:0.5,y:1.8,w:12,colW:[3,9],border:{type:'solid',color:'2D6A4F',pt:0.5},rowH:0.5});
+      const hdr=[[{text:'Ingredient',options:{bold:true,color:'95D5B2',fontSize:10,fontFace:'Arial',fill:{color:'1A2E1F'}}},{text:'What it does',options:{bold:true,color:'95D5B2',fontSize:10,fontFace:'Arial',fill:{color:'1A2E1F'}}}]];
+      const iRows=d.ingredients.map(function(ing){
+        return [{text:ing.name,options:{bold:true,color:'F0ECE2',fontSize:10,fontFace:'Arial',fill:{color:'162418'}}},{text:ing.benefit,options:{color:'A89F8A',fontSize:10,fontFace:'Arial',fill:{color:'162418'}}}];
+      });
+      s3.addTable(hdr.concat(iRows),{x:0.5,y:1.8,w:12,colW:[3,9],border:{type:'solid',color:'2D6A4F',pt:0.5},rowH:0.5,autoPage:false});
     }
   });
+
   pptx.writeFile({fileName:'Brand_Training_'+new Date().toISOString().slice(0,10)+'.pptx'});
+}
+
+// ===================== SEND TRAINING TAB =====================
+let uploadedPptxFile=null;    // raw ArrayBuffer of uploaded PPTX
+let uploadedPptxName='';
+let parsedSlides=[];           // [{index,title,brand}]
+let ambassadorContacts=[];     // [{name,email,phone}]
+let ambassadorAssignments=[];  // [{name,email,brands:[],slideIndices:[]}]
+
+// PPTX upload handlers
+const pptxDz=document.getElementById('pptx-dropzone');
+pptxDz.addEventListener('dragover',e=>{e.preventDefault();pptxDz.style.borderColor='var(--sage)';});
+pptxDz.addEventListener('dragleave',()=>{pptxDz.style.borderColor='';});
+pptxDz.addEventListener('drop',e=>{e.preventDefault();pptxDz.style.borderColor='';if(e.dataTransfer.files[0])handlePptxUpload(e.dataTransfer.files[0]);});
+document.getElementById('pptx-fin').addEventListener('change',e=>{if(e.target.files[0])handlePptxUpload(e.target.files[0]);});
+
+// Contacts upload handlers
+const contactsDz=document.getElementById('contacts-dropzone');
+contactsDz.addEventListener('dragover',e=>{e.preventDefault();contactsDz.style.borderColor='var(--sage)';});
+contactsDz.addEventListener('dragleave',()=>{contactsDz.style.borderColor='';});
+contactsDz.addEventListener('drop',e=>{e.preventDefault();contactsDz.style.borderColor='';if(e.dataTransfer.files[0])handleContactsUpload(e.dataTransfer.files[0]);});
+document.getElementById('contacts-fin').addEventListener('change',e=>{if(e.target.files[0])handleContactsUpload(e.target.files[0]);});
+
+async function handlePptxUpload(file){
+  if(!file.name.endsWith('.pptx')){alert('Please upload a .pptx file');return;}
+  uploadedPptxName=file.name;
+  const ab=await file.arrayBuffer();
+  uploadedPptxFile=ab;
+
+  // Parse slides using JSZip
+  try{
+    const zip=await JSZip.loadAsync(ab);
+    const slideFiles=Object.keys(zip.files)
+      .filter(f=>/^ppt\/slides\/slide\d+\.xml$/.test(f))
+      .sort((a,b)=>parseInt(a.match(/(\d+)/)[1])-parseInt(b.match(/(\d+)/)[1]));
+
+    parsedSlides=[];
+    for(const sf of slideFiles){
+      const xml=await zip.files[sf].async('string');
+      const parser=new DOMParser();
+      const doc=parser.parseFromString(xml,'text/xml');
+      let title='';
+      // Try to find title placeholder
+      const spTree=xml;
+      // Use regex to find title text (more reliable cross-browser than namespace-aware DOM)
+      const phMatch=spTree.match(/<p:ph[^>]*type="(title|ctrTitle)"[^>]*\/>/);
+      if(phMatch){
+        // Find the parent sp element and extract text
+        const phIdx=spTree.indexOf(phMatch[0]);
+        // Search backwards for <p:sp
+        const spStart=spTree.lastIndexOf('<p:sp',phIdx);
+        const spEnd=spTree.indexOf('</p:sp>',phIdx);
+        if(spStart!==-1&&spEnd!==-1){
+          const spBlock=spTree.substring(spStart,spEnd);
+          const tMatches=[...spBlock.matchAll(/<a:t>([^<]*)<\/a:t>/g)];
+          title=tMatches.map(m=>m[1]).join('');
+        }
+      }
+      // Fallback: look for the first large text or any <a:t> in the first shape
+      if(!title){
+        const allT=[...xml.matchAll(/<a:t>([^<]*)<\/a:t>/g)];
+        if(allT.length) title=allT[0][1];
+      }
+      parsedSlides.push({index:parsedSlides.length+1,title:title.trim(),fileName:sf,brand:null});
+    }
+
+    // Match slides to brands from schedule
+    const knownBrands=getKnownBrands();
+    parsedSlides.forEach(slide=>{
+      slide.brand=matchBrand(slide.title,knownBrands);
+    });
+
+    // Render slide list
+    renderSlideList();
+    document.getElementById('ss1n').classList.add('done');
+    document.getElementById('ss1n').textContent='✓';
+    refreshSendPage();
+  }catch(err){
+    alert('Error parsing PPTX: '+err.message);
+    console.error(err);
+  }
+}
+
+function getKnownBrands(){
+  // Get brands from schedule data
+  if(scheduleRows.length) return [...new Set(scheduleRows.map(r=>r.brand))];
+  // Fallback to allBrands from training cards
+  if(allBrands.length) return [...allBrands];
+  return [];
+}
+
+function matchBrand(slideTitle,brandNames){
+  if(!slideTitle) return null;
+  const titleLower=slideTitle.toLowerCase().trim();
+  // Exact match
+  for(const b of brandNames){
+    if(titleLower===b.toLowerCase()) return b;
+  }
+  // Title contains brand name
+  for(const b of brandNames){
+    if(titleLower.includes(b.toLowerCase())) return b;
+  }
+  // Brand name contains title (for short titles)
+  for(const b of brandNames){
+    if(b.toLowerCase().includes(titleLower)&&titleLower.length>3) return b;
+  }
+  // Fuzzy: check if first word of brand appears in title
+  for(const b of brandNames){
+    const firstWord=b.split(/\s+/)[0].toLowerCase();
+    if(firstWord.length>3&&titleLower.includes(firstWord)) return b;
+  }
+  return null;
+}
+
+function renderSlideList(){
+  const el=document.getElementById('pptx-slides-list');
+  el.style.display='block';
+  const matched=parsedSlides.filter(s=>s.brand);
+  const unmatched=parsedSlides.filter(s=>!s.brand);
+
+  let html='';
+  parsedSlides.forEach(s=>{
+    html+=`<div class="slide-row">
+      <div class="slide-row-num">Slide ${s.index}</div>
+      <div class="slide-row-title">${s.title||'(no title)'}</div>
+      ${s.brand
+        ?`<div class="slide-row-brand matched" style="color:${bColor(s.brand)};border-color:${bColor(s.brand)}44;background:${bColor(s.brand)}22">${s.brand}</div>`
+        :`<div class="slide-row-brand unmatched">Unmatched</div>`}
+    </div>`;
+  });
+  el.innerHTML=html;
+
+  const summary=document.getElementById('pptx-summary');
+  summary.style.display='block';
+  const brandSet=new Set(matched.map(s=>s.brand));
+  summary.innerHTML=`<strong style="color:var(--text1);">${uploadedPptxName}</strong> · ${parsedSlides.length} slides total · <span style="color:var(--sage);">${matched.length} matched</span> to ${brandSet.size} brands · <span style="color:${unmatched.length?'var(--ember)':'var(--text3)'}">${unmatched.length} unmatched</span>`;
+
+  // Also update the PPTX dropzone to show file name
+  pptxDz.innerHTML=`<div class="drop-icon" style="background:rgba(82,183,136,0.15);border-color:var(--sage);">✓</div><div><div class="drop-title" style="color:var(--sage);">${uploadedPptxName}</div><div class="drop-sub">${parsedSlides.length} slides parsed · Click to replace</div></div>`;
+}
+
+function handleContactsUpload(file){
+  const ext=file.name.split('.').pop().toLowerCase();
+  if(ext==='csv'){
+    Papa.parse(file,{header:true,skipEmptyLines:true,complete:r=>parseContacts(r.data,file.name)});
+  } else {
+    const reader=new FileReader();
+    reader.onload=e=>{
+      const wb=XLSX.read(e.target.result,{type:'array'});
+      const ws=wb.Sheets[wb.SheetNames[0]];
+      // Try to detect header row (might not be row 0)
+      const rawData=XLSX.utils.sheet_to_json(ws,{defval:'',raw:false});
+      // Also try range approach for files with title rows
+      const range=XLSX.utils.decode_range(ws['!ref']);
+      const allRows=XLSX.utils.sheet_to_json(ws,{defval:'',raw:false,header:1});
+      parseContactsFromRows(allRows,file.name);
+    };
+    reader.readAsArrayBuffer(file);
+  }
+}
+
+function parseContactsFromRows(rows,fname){
+  // Find the header row (look for "Name" or "Email" in any row)
+  let headerIdx=-1;
+  let nameCol=-1,emailCol=-1,phoneCol=-1;
+  for(let i=0;i<Math.min(rows.length,10);i++){
+    const row=rows[i].map(c=>(c||'').toString().trim().toLowerCase());
+    for(let j=0;j<row.length;j++){
+      if(row[j]==='name'||row[j]==='full name'||row[j]==='ambassador name'||row[j]==='ambassador'){
+        headerIdx=i;nameCol=j;
+      }
+      if(row[j]==='email'||row[j]==='email address'||row[j]==='e-mail'){
+        headerIdx=i;emailCol=j;
+      }
+      if(row[j]==='phone'||row[j]==='phone#'||row[j]==='phone number'||row[j]==='cell'){
+        phoneCol=j;
+      }
+    }
+    if(headerIdx>=0) break;
+  }
+
+  // If no explicit header found, try first row
+  if(headerIdx<0){
+    headerIdx=0;
+    // Try to find columns by content pattern
+    if(rows.length>1){
+      const row1=rows[1]||[];
+      for(let j=0;j<row1.length;j++){
+        const v=(row1[j]||'').toString().trim();
+        if(v.includes('@')&&emailCol<0) emailCol=j;
+        if(/^[A-Z][a-z]+ [A-Z][a-z]+/.test(v)&&nameCol<0) nameCol=j;
+      }
+    }
+  }
+
+  // If still no name col, use column 0
+  if(nameCol<0) nameCol=0;
+
+  ambassadorContacts=[];
+  for(let i=headerIdx+1;i<rows.length;i++){
+    const row=rows[i];
+    if(!row||!row.length) continue;
+    const name=(row[nameCol]||'').toString().trim().replace(/^\n+/,'');
+    if(!name||name.length<2) continue;
+    const email=emailCol>=0?(row[emailCol]||'').toString().trim().replace(/^\n+/,''):'';
+    const phone=phoneCol>=0?(row[phoneCol]||'').toString().trim().replace(/^\n+/,''):'';
+    if(name.toLowerCase()==='name'||name.toLowerCase()==='ambassador') continue; // skip headers
+    ambassadorContacts.push({name,email,phone});
+  }
+
+  renderContactsPreview(fname);
+  document.getElementById('ss2n').classList.add('done');
+  document.getElementById('ss2n').textContent='✓';
+  refreshSendPage();
+}
+
+function parseContacts(data,fname){
+  const keys=Object.keys(data[0]||{});
+  const nameKey=keys.find(k=>/^name$/i.test(k))||keys.find(k=>/name|ambassador/i.test(k))||keys[0];
+  const emailKey=keys.find(k=>/email/i.test(k));
+  const phoneKey=keys.find(k=>/phone/i.test(k));
+
+  ambassadorContacts=data.map(r=>({
+    name:(r[nameKey]||'').toString().trim().replace(/^\n+/,''),
+    email:(r[emailKey]||'').toString().trim().replace(/^\n+/,''),
+    phone:phoneKey?(r[phoneKey]||'').toString().trim().replace(/^\n+/,''):''
+  })).filter(c=>c.name&&c.name.length>1);
+
+  renderContactsPreview(fname);
+  document.getElementById('ss2n').classList.add('done');
+  document.getElementById('ss2n').textContent='✓';
+  refreshSendPage();
+}
+
+function renderContactsPreview(fname){
+  const el=document.getElementById('contacts-preview');
+  el.style.display='block';
+  const withEmail=ambassadorContacts.filter(c=>c.email);
+  const noEmail=ambassadorContacts.filter(c=>!c.email);
+  let html=`<div style="margin-bottom:8px;"><strong style="color:var(--text1);">${fname}</strong> · ${ambassadorContacts.length} contacts loaded · <span style="color:var(--sage);">${withEmail.length} with email</span>`;
+  if(noEmail.length) html+=` · <span style="color:var(--ember);">${noEmail.length} missing email</span>`;
+  html+=`</div><div style="display:flex;flex-wrap:wrap;gap:5px;">`;
+  ambassadorContacts.forEach(c=>{
+    const col=c.email?'var(--sage)':'var(--ember)';
+    html+=`<span style="font-size:11px;padding:3px 10px;border-radius:12px;background:var(--glass2);border:1px solid var(--border2);color:var(--text2);">
+      <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:${col};margin-right:4px;"></span>${c.name}</span>`;
+  });
+  html+=`</div>`;
+  el.innerHTML=html;
+
+  // Update dropzone
+  contactsDz.innerHTML=`<div class="drop-icon" style="background:rgba(82,183,136,0.15);border-color:var(--sage);">✓</div><div><div class="drop-title" style="color:var(--sage);">${ambassadorContacts.length} contacts loaded</div><div class="drop-sub">${fname} · Click to replace</div></div>`;
+}
+
+function refreshSendPage(){
+  // Update schedule check
+  const schedCheck=document.getElementById('schedule-check');
+  if(scheduleRows.length){
+    const ambs=[...new Set(scheduleRows.map(r=>r.ambassador))];
+    const brands=[...new Set(scheduleRows.map(r=>r.brand))];
+    schedCheck.innerHTML=`<span style="color:var(--sage);">✓ Schedule loaded</span> — ${ambs.length} ambassadors across ${brands.length} brands.`;
+    document.getElementById('ss3n').classList.add('done');
+    document.getElementById('ss3n').textContent='✓';
+  } else {
+    schedCheck.innerHTML=`<span style="color:var(--ember);">No schedule loaded.</span> Upload a Promomash export from the "Training Cards" or "Ambassador Schedule" tab first.`;
+    document.getElementById('ss3n').classList.remove('done');
+    document.getElementById('ss3n').textContent='3';
+  }
+
+  // Show step 4 if we have slides + contacts + schedule
+  if(parsedSlides.length&&ambassadorContacts.length&&scheduleRows.length){
+    document.getElementById('send-step-4').style.display='block';
+    buildAssignments();
+    renderAssignments();
+  } else {
+    document.getElementById('send-step-4').style.display='none';
+  }
+}
+
+function normalizeName(n){
+  return n.toLowerCase().replace(/[^a-z ]/g,'').trim().replace(/\s+/g,' ');
+}
+
+function buildAssignments(){
+  // Build ambassador -> brands map from schedule
+  const schedMap={};
+  scheduleRows.forEach(r=>{
+    const key=normalizeName(r.ambassador);
+    if(!schedMap[key]) schedMap[key]={name:r.ambassador,brands:new Set()};
+    schedMap[key].brands.add(r.brand);
+  });
+
+  // Match contacts to schedule ambassadors
+  ambassadorAssignments=[];
+  ambassadorContacts.forEach(contact=>{
+    const cNorm=normalizeName(contact.name);
+    // Try exact match first
+    let schedEntry=schedMap[cNorm];
+    // Try partial match
+    if(!schedEntry){
+      const cParts=cNorm.split(' ');
+      for(const [key,val] of Object.entries(schedMap)){
+        const kParts=key.split(' ');
+        // Match if first and last name match
+        if(cParts[0]===kParts[0]&&cParts[cParts.length-1]===kParts[kParts.length-1]){
+          schedEntry=val;break;
+        }
+        // Match if last name matches and first initial matches
+        if(cParts.length>=2&&kParts.length>=2){
+          if(cParts[cParts.length-1]===kParts[kParts.length-1]&&cParts[0][0]===kParts[0][0]){
+            schedEntry=val;break;
+          }
+        }
+      }
+    }
+
+    if(!schedEntry) return; // Contact not in schedule this month
+
+    const brands=[...schedEntry.brands];
+    // Find which slide indices match these brands
+    const slideIndices=[];
+    parsedSlides.forEach(slide=>{
+      if(slide.brand&&brands.includes(slide.brand)){
+        slideIndices.push(slide.index);
+      }
+    });
+
+    if(slideIndices.length>0){
+      ambassadorAssignments.push({
+        name:contact.name,
+        email:contact.email,
+        phone:contact.phone,
+        brands:brands.sort(),
+        slideIndices:slideIndices,
+        matchedBrands:[...new Set(parsedSlides.filter(s=>slideIndices.includes(s.index)).map(s=>s.brand))]
+      });
+    }
+  });
+
+  // Sort by name
+  ambassadorAssignments.sort((a,b)=>a.name.localeCompare(b.name));
+}
+
+function renderAssignments(){
+  const el=document.getElementById('amb-preview-area');
+  if(!ambassadorAssignments.length){
+    el.innerHTML='<div style="padding:20px;text-align:center;color:var(--text3);">No matching assignments found. Make sure schedule names match contact names, and slide titles match brand names.</div>';
+    return;
+  }
+
+  let html='<div style="margin-bottom:12px;font-size:13px;color:var(--text2);"><strong style="color:var(--text1);">'+ambassadorAssignments.length+'</strong> ambassadors will receive training · <strong style="color:var(--text1);">'+new Set(ambassadorAssignments.flatMap(a=>a.matchedBrands)).size+'</strong> brands covered</div>';
+
+  ambassadorAssignments.forEach((a,i)=>{
+    const brandTags=a.matchedBrands.map(b=>`<span class="amb-brand-tag"><span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:${bColor(b)}"></span>${b}</span>`).join('');
+    html+=`<div class="amb-card" id="acard-${i}">
+      <div class="amb-card-hdr" onclick="document.getElementById('acard-${i}').classList.toggle('open')">
+        <div>
+          <div class="amb-card-name">${a.name}</div>
+          <div class="amb-card-email">${a.email||'<span class=\'amb-no-email\'>No email</span>'}</div>
+        </div>
+        <div class="amb-card-meta">
+          <div class="amb-card-count">${a.slideIndices.length} slide${a.slideIndices.length>1?'s':''} · ${a.matchedBrands.length} brand${a.matchedBrands.length>1?'s':''}</div>
+          <button class="btn" onclick="event.stopPropagation();downloadIndividual(${i})" style="font-size:11px;padding:5px 12px;">⬇</button>
+        </div>
+      </div>
+      <div class="amb-card-body">
+        <div style="margin-bottom:8px;">${brandTags}</div>
+        <div style="font-size:11px;color:var(--text3);">Slides: ${a.slideIndices.join(', ')}</div>
+      </div>
+    </div>`;
+  });
+  el.innerHTML=html;
+}
+
+async function createSubsetPptx(keepSlideNumbers){
+  const zip=await JSZip.loadAsync(uploadedPptxFile);
+
+  const slideFiles=Object.keys(zip.files)
+    .filter(f=>/^ppt\/slides\/slide\d+\.xml$/.test(f))
+    .sort((a,b)=>parseInt(a.match(/(\d+)/)[1])-parseInt(b.match(/(\d+)/)[1]));
+
+  const totalSlides=slideFiles.length;
+  const removeNumbers=[];
+  for(let i=1;i<=totalSlides;i++){
+    if(!keepSlideNumbers.includes(i)) removeNumbers.push(i);
+  }
+
+  if(removeNumbers.length===0){
+    return await zip.generateAsync({type:'blob',mimeType:'application/vnd.openxmlformats-officedocument.presentationml.presentation'});
+  }
+
+  // Read presentation.xml.rels to map rId to slide files
+  const presRelsPath='ppt/_rels/presentation.xml.rels';
+  let presRelsXml='';
+  if(zip.files[presRelsPath]) presRelsXml=await zip.files[presRelsPath].async('string');
+
+  const slideToRId={};
+  const relRegex=/<Relationship[^>]*Id="([^"]+)"[^>]*Target="slides\/slide(\d+)\.xml"[^>]*\/?>/g;
+  let rm;
+  while((rm=relRegex.exec(presRelsXml))!==null){
+    slideToRId[parseInt(rm[2])]=rm[1];
+  }
+
+  // Remove relationships for deleted slides
+  for(const num of removeNumbers){
+    const rId=slideToRId[num];
+    if(rId){
+      presRelsXml=presRelsXml.replace(new RegExp('<Relationship[^>]*Id="'+rId+'"[^>]*/?>','g'),'');
+    }
+  }
+  if(zip.files[presRelsPath]) zip.file(presRelsPath,presRelsXml);
+
+  // Update presentation.xml - remove sldId entries
+  const presPath='ppt/presentation.xml';
+  if(zip.files[presPath]){
+    let presXml=await zip.files[presPath].async('string');
+    for(const num of removeNumbers){
+      const rId=slideToRId[num];
+      if(rId){
+        presXml=presXml.replace(new RegExp('<p:sldId[^>]*r:id="'+rId+'"[^>]*/?>','g'),'');
+      }
+    }
+    zip.file(presPath,presXml);
+  }
+
+  // Remove slide files and rels
+  for(const num of removeNumbers){
+    const sf='ppt/slides/slide'+num+'.xml';
+    if(zip.files[sf]) zip.remove(sf);
+    const rf='ppt/slides/_rels/slide'+num+'.xml.rels';
+    if(zip.files[rf]) zip.remove(rf);
+  }
+
+  // Update [Content_Types].xml
+  const ctPath='[Content_Types].xml';
+  if(zip.files[ctPath]){
+    let ctXml=await zip.files[ctPath].async('string');
+    for(const num of removeNumbers){
+      ctXml=ctXml.replace(new RegExp('<Override[^>]*PartName="/ppt/slides/slide'+num+'\\.xml"[^>]*/?>','g'),'');
+    }
+    zip.file(ctPath,ctXml);
+  }
+
+  return await zip.generateAsync({type:'blob',mimeType:'application/vnd.openxmlformats-officedocument.presentationml.presentation'});
+}
+
+async function downloadIndividual(idx){
+  const a=ambassadorAssignments[idx];
+  if(!a)return;
+  try{
+    const blob=await createSubsetPptx(a.slideIndices);
+    const url=URL.createObjectURL(blob);
+    const link=document.createElement('a');
+    link.href=url;
+    link.download=a.name.replace(/[^a-zA-Z0-9 ]/g,'').replace(/\s+/g,'_')+'_Training.pptx';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  }catch(err){
+    alert('Error creating PPTX for '+a.name+': '+err.message);
+  }
+}
+
+async function downloadAllZip(){
+  const btn=document.getElementById('send-dl-all');
+  btn.disabled=true;btn.textContent='Creating ZIP…';
+  try{
+    const zip=new JSZip();
+    for(const a of ambassadorAssignments){
+      if(!a.slideIndices.length) continue;
+      const blob=await createSubsetPptx(a.slideIndices);
+      const safeName=a.name.replace(/[^a-zA-Z0-9 ]/g,'').replace(/\s+/g,'_');
+      zip.file(safeName+'_Training.pptx',blob);
+    }
+    const zipBlob=await zip.generateAsync({type:'blob'});
+    const url=URL.createObjectURL(zipBlob);
+    const link=document.createElement('a');
+    link.href=url;
+    link.download='Training_All_Ambassadors_'+new Date().toISOString().slice(0,10)+'.zip';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  }catch(err){
+    alert('Error creating ZIP: '+err.message);
+  }
+  btn.disabled=false;btn.textContent='⬇ Download All as ZIP';
+}
+
+async function sendAllEmails(){
+  const withEmail=ambassadorAssignments.filter(a=>a.email);
+  if(!withEmail.length){
+    alert('No ambassadors have email addresses.');
+    return;
+  }
+
+  if(!confirm('Send training decks to '+withEmail.length+' ambassadors via email?\n\nThis will email each ambassador their personalized training slides.')){
+    return;
+  }
+
+  const btn=document.getElementById('send-email-all');
+  btn.disabled=true;btn.textContent='Sending…';
+
+  const statusArea=document.getElementById('send-status-area');
+  statusArea.style.display='block';
+  statusArea.innerHTML='<div style="font-size:12px;color:var(--text2);margin-bottom:8px;font-weight:600;">Sending Progress</div>';
+
+  let sent=0,failed=0;
+
+  for(const a of withEmail){
+    const rowId='sr_'+a.name.replace(/\W/g,'_');
+    statusArea.innerHTML+=`<div class="send-row" id="${rowId}"><div class="send-icon">⏳</div><div class="send-name">${a.name}</div><div class="send-detail">${a.email}</div><div class="send-badge wait">Sending…</div></div>`;
+
+    try{
+      const blob=await createSubsetPptx(a.slideIndices);
+      const reader=new FileReader();
+      const b64=await new Promise((resolve,reject)=>{
+        reader.onload=()=>resolve(reader.result.split(',')[1]);
+        reader.onerror=reject;
+        reader.readAsDataURL(blob);
+      });
+
+      const resp=await fetch('/api/send',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
+        to:a.email,
+        subject:'Your Brand Training Materials — Grassroots Marketing',
+        html:`<div style="font-family:Arial,sans-serif;max-width:600px;">
+          <h2 style="color:#2d6a4f;">Your Brand Training Deck</h2>
+          <p>Hi ${a.name.split(' ')[0]},</p>
+          <p>Attached are your brand training materials for this month. You have <strong>${a.matchedBrands.length} brand${a.matchedBrands.length>1?'s':''}</strong> to review:</p>
+          <ul>${a.matchedBrands.map(b=>'<li><strong>'+b+'</strong></li>').join('')}</ul>
+          <p>Please review these materials before your upcoming demos. Let us know if you have any questions!</p>
+          <p style="color:#666;font-size:12px;">— Grassroots Marketing Team</p>
+        </div>`,
+        attachment:b64,
+        filename:a.name.replace(/[^a-zA-Z0-9 ]/g,'').replace(/\s+/g,'_')+'_Training.pptx'
+      })});
+
+      if(resp.ok){
+        sent++;
+        const row=document.getElementById(rowId);
+        if(row) row.innerHTML=`<div class="send-icon">✅</div><div class="send-name">${a.name}</div><div class="send-detail">${a.email}</div><div class="send-badge ok">Sent</div>`;
+      } else {
+        const err=await resp.json();
+        throw new Error(err.error||'Send failed');
+      }
+    }catch(err){
+      failed++;
+      const row=document.getElementById(rowId);
+      if(row) row.innerHTML=`<div class="send-icon">❌</div><div class="send-name">${a.name}</div><div class="send-detail">${err.message}</div><div class="send-badge fail">Failed</div>`;
+    }
+  }
+
+  statusArea.innerHTML+=`<div style="margin-top:12px;padding:12px;background:var(--glass2);border-radius:var(--r-sm);font-size:13px;color:var(--text1);">Done: <span style="color:var(--sage);">${sent} sent</span>${failed?' · <span style="color:var(--ember);">'+failed+' failed</span>':''}</div>`;
+  btn.disabled=false;btn.textContent='✉ Email All Ambassadors';
 }
 </script>
 </body>
