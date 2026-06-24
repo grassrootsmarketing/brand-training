@@ -14,12 +14,9 @@ export default async function handler(req, res) {
     }
 
     try {
-        // Clone body and ensure correct model
         const body = { ...req.body };
-        body.model = 'claude-sonnet-4-20250514';
 
         // Remove tools if present (web_search requires newer API version)
-        // The prompt alone produces great brand cards
         if (body.tools) {
             delete body.tools;
         }
