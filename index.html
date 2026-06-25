@@ -787,7 +787,10 @@ Return ONLY a valid JSON object — no markdown, no backticks, nothing else:
     // Fetch brand logo from Clearbit
     if(parsed.websiteDomain){
       try{
-        const logoResp=await fetch('/api/image-proxy?url='+encodeURIComponent('https://logo.clearbit.com/'+parsed.websiteDomain+'?size=200'));
+        const logoUrl='https://logo.clearbit.com/'+parsed.websiteDomain+'?size=200';
+        const gUrl='https://t2.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://'+parsed.websiteDomain+'&size=128';
+        let logoResp=await fetch('/api/image-proxy?url='+encodeURIComponent(logoUrl));
+        if(!logoResp.ok) logoResp=await fetch('/api/image-proxy?url='+encodeURIComponent(gUrl));
         if(logoResp.ok){const logoData=await logoResp.json();if(logoData.data)parsed.logoBase64=logoData.data;}
       }catch(e){console.log('Logo fetch failed:',e);}
     }
