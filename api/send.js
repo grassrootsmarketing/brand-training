@@ -18,7 +18,7 @@ export default async function handler(req, res) {
 
   try {
     const payload = {
-      from: 'Grassroots Marketing <training@grassrootsmarketing.com>',
+      from: 'Grassroots Marketing <onboarding@resend.dev>',
       to: [to],
       subject,
       html
