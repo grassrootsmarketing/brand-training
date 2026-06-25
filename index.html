@@ -713,11 +713,17 @@ async function doCard(brand) {
   try {
     const prompt = 'You are a brand education researcher for a field marketing company that runs in-store demos at Whole Foods and Sprouts. Research "' + brand + '" using their website and product/nutritional information.\n\nReturn ONLY a valid JSON object — no markdown, no backticks, nothing else:\n\n{\n  "brand": "' + brand + '",\n  "tagline": "official tagline or key positioning line (max 12 words)",\n  "founded": "founding year + 1-sentence origin story",\n  "mission": "brand mission and values in 1-2 sentences",\n  "productFocus": "what they make and who it is for in 2 sentences",\n  "targetAudience": "who buys this brand in plain language",\n  "keyBenefits": ["benefit 1 (max 8 words)","benefit 2","benefit 3","benefit 4"],\n  "certifications": ["certification 1","certification 2"],\n  "talkingPoints": [\n    "Natural conversational thing an ambassador says to a Whole Foods or Sprouts shopper",\n    "Second talking point",\n    "Third talking point"\n  ],\n  "categoryContext": "2 sentences on the broader product category — why consumers are choosing it and what the trend is",\n  "ingredients": [\n    {"name":"key ingredient name","benefit":"what it does for the body in one clear sentence"},\n    {"name":"ingredient 2","benefit":"..."},\n    {"name":"ingredient 3","benefit":"..."},\n    {"name":"ingredient 4","benefit":"..."}\n  ]\n}';
 
-    const resp = await fetch('/api/generate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({
-      model: 'claude-sonnet-4-20250514', max_tokens: 2048,
-      tools: [{ type: 'web_search_20250305', name: 'web_search' }],
-      messages: [{ role: 'user', content: prompt }]
-    })});
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 55000);
+    let resp;
+    try {
+      resp = await fetch('/api/generate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, signal: controller.signal, body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514', max_tokens: 2048,
+        tools: [{ type: 'web_search_20250305', name: 'web_search' }],
+        messages: [{ role: 'user', content: prompt }]
+      })});
+    } finally { clearTimeout(timeout); }
+    if (!resp.ok) { const errText = await resp.text().catch(() => 'Unknown error'); throw new Error('API ' + resp.status + ': ' + errText.substring(0, 120)); }
     const data = await resp.json();
     if (!data.content) throw new Error(data.error?.message || 'Empty response');
     const text = data.content.filter(b => b.type === 'text').map(b => b.text).join('');
