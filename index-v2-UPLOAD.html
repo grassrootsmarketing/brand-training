@@ -1,0 +1,1084 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Brand Training Agent — Grassroots</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.min.js"></script>
+<style>
+:root {
+  --ink:#0d1a0f;--ink2:#162418;--forest:#2d6a4f;--sage:#52b788;--mint:#95d5b2;
+  --ember:#e76f51;--glass:rgba(255,255,255,0.04);--glass2:rgba(255,255,255,0.07);
+  --border:rgba(255,255,255,0.08);--border2:rgba(255,255,255,0.14);
+  --text1:#f0ece2;--text2:#a89f8a;--text3:#6b6452;--r:10px;--r-sm:6px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Syne',sans-serif;background:var(--ink);color:var(--text1);min-height:100vh;overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");pointer-events:none;z-index:999;opacity:0.55;}
+
+/* TOPBAR */
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:0 2.5rem;height:56px;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:50;background:rgba(13,26,15,0.9);backdrop-filter:blur(14px);}
+.logo{display:flex;align-items:center;gap:10px;}
+.logo-mark{width:28px;height:28px;background:var(--forest);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:var(--mint);}
+.logo-text{font-size:13px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;}
+.hub-back{display:flex;align-items:center;gap:5px;text-decoration:none;color:var(--text3);font-size:12px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;padding:5px 10px;border-radius:6px;transition:all 0.2s;}
+.hub-back:hover{color:var(--sage);background:var(--glass);}
+.nav-sep{width:1px;height:18px;background:var(--border2);margin:0 16px;}
+.nav-label{font-size:12px;color:var(--text3);}
+.topbar-right{display:flex;align-items:center;gap:8px;}
+.live-dot{width:6px;height:6px;border-radius:50%;background:var(--sage);animation:livepulse 2.5s ease-in-out infinite;}
+@keyframes livepulse{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(82,183,136,0.5);}50%{opacity:0.6;box-shadow:0 0 0 5px rgba(82,183,136,0);}}
+.tag-badge{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text3);letter-spacing:0.08em;}
+
+/* HERO */
+.hero{padding:3.5rem 2.5rem 1.5rem;max-width:960px;margin:0 auto;position:relative;}
+.hero::after{content:'';position:absolute;top:0;right:0;width:420px;height:280px;background:radial-gradient(ellipse at top right,rgba(45,106,79,0.18) 0%,transparent 65%);pointer-events:none;}
+.hero-eye{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:0.18em;text-transform:uppercase;color:var(--sage);margin-bottom:14px;display:flex;align-items:center;gap:10px;}
+.hero-eye::before{content:'';display:inline-block;width:24px;height:1px;background:var(--sage);}
+.hero-title{font-size:clamp(2rem,5vw,3rem);font-weight:800;line-height:1.05;letter-spacing:-0.02em;margin-bottom:12px;}
+.hero-title em{font-family:'Instrument Serif',serif;font-style:italic;color:var(--sage);font-weight:400;}
+.hero-sub{font-size:14px;color:var(--text2);max-width:460px;line-height:1.7;font-weight:400;}
+
+/* CONTAINER */
+.container{max-width:960px;margin:0 auto;padding:1.5rem 2.5rem 5rem;}
+
+/* STEP CARDS */
+.step-card{background:var(--glass);border:1px solid var(--border2);border-radius:14px;padding:24px;margin-bottom:16px;position:relative;overflow:hidden;}
+.step-card::before{content:'';position:absolute;top:-80px;right:-80px;width:200px;height:200px;border-radius:50%;background:radial-gradient(circle,rgba(45,106,79,0.08) 0%,transparent 70%);pointer-events:none;}
+.step-num{position:absolute;top:24px;left:24px;width:32px;height:32px;border-radius:50%;background:var(--forest);color:var(--mint);font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;transition:all 0.3s;}
+.step-num.done{background:var(--sage);color:var(--ink);}
+.step-num.active{box-shadow:0 0 0 3px rgba(82,183,136,0.3);}
+.step-title{font-size:17px;font-weight:700;margin-left:46px;margin-bottom:4px;}
+.step-sub{font-size:12px;color:var(--text3);margin-left:46px;margin-bottom:16px;line-height:1.6;}
+.step-body{margin-left:46px;}
+.step-card.locked{opacity:0.5;pointer-events:none;}
+.step-card.locked .step-num{background:var(--glass2);color:var(--text3);}
+
+/* UPLOAD DROP */
+.upload-drop{border:1.5px dashed var(--border2);border-radius:var(--r);padding:24px;cursor:pointer;transition:all 0.2s;display:flex;align-items:center;gap:16px;background:var(--glass);}
+.upload-drop:hover,.upload-drop.drag{border-color:var(--sage);background:rgba(82,183,136,0.06);}
+.drop-icon{width:42px;height:42px;border-radius:10px;background:var(--glass2);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+.drop-title{font-size:13px;font-weight:700;color:var(--text1);}
+.drop-sub{font-size:11px;color:var(--text3);font-family:'JetBrains Mono',monospace;}
+
+/* BRAND PILLS */
+.brand-pills-area{margin-top:16px;}
+.brand-pills{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;}
+.bpill{font-size:11px;font-weight:600;letter-spacing:0.03em;padding:5px 13px;border-radius:20px;border:1px solid var(--border2);background:var(--glass);color:var(--text2);cursor:pointer;transition:all 0.13s;user-select:none;display:flex;align-items:center;gap:6px;}
+.bpill .pd{width:6px;height:6px;border-radius:50%;}
+.bpill.on{background:var(--glass2);color:var(--text1);border-color:rgba(255,255,255,0.22);}
+.bpill:hover:not(.on){border-color:var(--text3);background:var(--glass2);}
+
+/* SUMMARY STATS */
+.summary-stats{display:flex;gap:16px;flex-wrap:wrap;margin-top:12px;}
+.stat-chip{display:flex;align-items:center;gap:6px;padding:6px 14px;border-radius:20px;background:var(--glass2);border:1px solid var(--border);font-size:12px;color:var(--text2);}
+.stat-chip strong{color:var(--text1);}
+
+/* BUTTONS */
+.btn{font-family:'Syne',sans-serif;font-size:12px;font-weight:700;letter-spacing:0.04em;border-radius:var(--r-sm);border:1px solid var(--border2);background:var(--glass2);color:var(--text1);padding:8px 16px;cursor:pointer;transition:all 0.14s;display:inline-flex;align-items:center;gap:7px;}
+.btn:hover{background:var(--glass);border-color:var(--text3);}
+.btn:active{transform:scale(0.97);}
+.btn:disabled{opacity:0.35;cursor:not-allowed;transform:none;}
+.btn-go{background:var(--forest);border-color:var(--sage);color:var(--mint);padding:10px 22px;font-size:13px;border-radius:var(--r);}
+.btn-go:hover{background:var(--sage);color:var(--ink);border-color:var(--sage);}
+
+/* ASSIGNMENT TABLE */
+.assign-table{width:100%;border-collapse:collapse;font-size:12px;margin-top:12px;}
+.assign-table th{text-align:left;padding:10px 12px;background:var(--ink2);color:var(--sage);font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;border-bottom:1px solid var(--border2);}
+.assign-table td{padding:8px 12px;border-bottom:1px solid var(--border);color:var(--text1);}
+.assign-table tr:hover td{background:var(--glass);}
+
+/* SCHEDULE TABLE */
+.sched-tbl{width:100%;border-collapse:collapse;font-size:12px;}
+.sched-tbl th{text-align:left;padding:10px 12px;background:var(--ink2);color:var(--sage);font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;border-bottom:1px solid var(--border2);position:sticky;top:0;}
+.sched-tbl td{padding:8px 12px;border-bottom:1px solid var(--border);color:var(--text1);}
+.sched-tbl tr:hover td{background:var(--glass);}
+.sched-tbl .brand-cell{font-weight:600;}
+.sched-tbl .date-cell{color:var(--sage);font-family:'JetBrains Mono',monospace;font-size:11px;}
+.sched-tbl .amb-cell{color:var(--text2);}
+.sched-tbl .venue-cell{color:var(--text2);font-size:11px;}
+
+/* BRAND TAG */
+.amb-brand-tag{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;padding:4px 12px;border-radius:16px;background:var(--glass2);border:1px solid var(--border2);color:var(--text2);margin:3px 3px 3px 0;}
+
+/* OUTPUT */
+.output-area{display:flex;flex-direction:column;gap:2.5rem;margin-top:16px;}
+.brand-block{animation:fadeUp 0.45s ease both;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(18px);}to{opacity:1;transform:translateY(0);}}
+.brand-block:nth-child(1){animation-delay:0ms;}.brand-block:nth-child(2){animation-delay:60ms;}.brand-block:nth-child(3){animation-delay:120ms;}.brand-block:nth-child(4){animation-delay:180ms;}.brand-block:nth-child(5){animation-delay:240ms;}
+
+.bhdr{display:flex;align-items:center;gap:12px;margin-bottom:12px;}
+.bhdr-name{font-size:10px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;font-family:'JetBrains Mono',monospace;white-space:nowrap;}
+.bhdr-line{flex:1;height:1px;}
+.bhdr-ct{font-size:10px;color:var(--text3);font-family:'JetBrains Mono',monospace;white-space:nowrap;}
+
+.slides-pair{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+@media(max-width:700px){.slides-pair{grid-template-columns:1fr;}}
+
+/* SLIDE CARD */
+.slide-card{background:var(--ink2);border:1px solid var(--border2);border-radius:14px;overflow:hidden;display:flex;flex-direction:column;transition:border-color 0.2s,transform 0.2s;}
+.slide-card:hover{border-color:rgba(255,255,255,0.22);transform:translateY(-2px);}
+.slide-top{padding:1rem 1.25rem 0.9rem;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;justify-content:space-between;gap:10px;position:relative;}
+.slide-accent-bar{position:absolute;bottom:0;left:0;height:2px;width:35%;}
+.slide-type{font-size:9px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:var(--text3);margin-bottom:4px;font-family:'JetBrains Mono',monospace;}
+.slide-brand{font-size:15px;font-weight:700;letter-spacing:-0.01em;}
+.slide-num{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text3);background:var(--glass);border:1px solid var(--border);padding:3px 8px;border-radius:20px;white-space:nowrap;flex-shrink:0;}
+.slide-body{padding:1.25rem;flex:1;display:flex;flex-direction:column;gap:1rem;}
+
+/* CONTENT */
+.flbl{font-size:9px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:var(--text3);font-family:'JetBrains Mono',monospace;margin-bottom:5px;}
+.fval{font-size:13px;color:var(--text1);line-height:1.6;}
+.fval.dim{color:var(--text2);}
+.fval.quote{font-family:'Instrument Serif',serif;font-style:italic;font-size:15px;color:var(--sage);line-height:1.45;}
+.mini2{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.mini-cell{background:var(--glass);border:1px solid var(--border);border-radius:var(--r-sm);padding:0.65rem 0.75rem;}
+.hdiv{height:1px;background:var(--border);}
+.tags{display:flex;flex-wrap:wrap;gap:5px;}
+.tg{font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;letter-spacing:0.02em;}
+.tg-g{background:rgba(45,106,79,0.3);color:var(--mint);border:1px solid rgba(82,183,136,0.25);}
+.tg-m{background:var(--glass);color:var(--text2);border:1px solid var(--border);}
+.tp-list{display:flex;flex-direction:column;gap:8px;}
+.tp-row{display:flex;gap:10px;align-items:flex-start;}
+.tp-idx{font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:500;color:var(--sage);background:rgba(45,106,79,0.2);border:1px solid rgba(82,183,136,0.2);width:18px;height:18px;border-radius:4px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px;}
+.tp-txt{font-size:12.5px;color:var(--text1);line-height:1.55;}
+.ingr-table{display:flex;flex-direction:column;gap:9px;}
+.ingr-row{display:flex;gap:10px;align-items:flex-start;padding-bottom:9px;border-bottom:1px solid var(--border);}
+.ingr-row:last-child{border-bottom:none;padding-bottom:0;}
+.ingr-name{font-size:11px;font-weight:700;color:var(--sage);min-width:110px;flex-shrink:0;line-height:1.4;padding-top:1px;font-family:'JetBrains Mono',monospace;letter-spacing:0.02em;}
+.ingr-desc{font-size:12.5px;color:var(--text2);line-height:1.55;}
+
+/* LOADING / ERROR */
+.loading-wrap{background:var(--ink2);border:1px solid var(--border2);border-radius:14px;padding:2rem 1.5rem;display:flex;align-items:center;gap:16px;}
+.spin{width:22px;height:22px;border:2px solid var(--border2);border-top-color:var(--sage);border-radius:50%;animation:spin 0.7s linear infinite;flex-shrink:0;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.l-brand{font-size:14px;font-weight:600;margin-bottom:3px;}
+.l-step{font-size:11px;color:var(--text3);font-family:'JetBrains Mono',monospace;}
+.err-wrap{background:rgba(231,111,81,0.08);border:1px solid rgba(231,111,81,0.25);border-radius:var(--r);padding:1rem 1.25rem;display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:13px;color:#f4a261;}
+
+/* EMPTY */
+.empty{text-align:center;padding:5rem 2rem;color:var(--text3);}
+.empty-g{font-size:3rem;margin-bottom:16px;display:block;opacity:0.35;}
+.empty-title{font-size:15px;font-weight:600;color:var(--text2);margin-bottom:6px;}
+.empty-hint{font-size:13px;}
+
+/* AMBASSADOR PREVIEW CARDS */
+.amb-preview{margin-top:12px;display:flex;flex-direction:column;gap:10px;}
+.amb-card{background:var(--ink2);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;transition:border-color 0.2s;}
+.amb-card:hover{border-color:var(--border2);}
+.amb-card-hdr{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;cursor:pointer;user-select:none;}
+.amb-card-name{font-size:14px;font-weight:700;}
+.amb-card-email{font-size:11px;color:var(--text3);font-family:'JetBrains Mono',monospace;}
+.amb-card-meta{display:flex;align-items:center;gap:8px;}
+.amb-card-count{font-size:11px;color:var(--sage);font-family:'JetBrains Mono',monospace;background:rgba(45,106,79,0.2);padding:3px 10px;border-radius:12px;}
+.amb-card-body{padding:0 16px 14px;display:none;border-top:1px solid var(--border);}
+.amb-card.open .amb-card-body{display:block;padding-top:12px;}
+.amb-no-email{color:var(--ember);font-size:11px;font-style:italic;}
+
+/* SEND STATUS */
+.send-status{margin-top:12px;}
+.send-row{display:flex;align-items:center;gap:12px;padding:8px 12px;border-bottom:1px solid var(--border);font-size:12px;}
+.send-row:last-child{border-bottom:none;}
+.send-icon{font-size:14px;width:20px;text-align:center;}
+.send-name{font-weight:600;min-width:140px;}
+.send-detail{color:var(--text3);font-family:'JetBrains Mono',monospace;font-size:11px;flex:1;}
+.send-badge{font-size:10px;padding:2px 8px;border-radius:10px;font-weight:600;}
+.send-badge.ok{background:rgba(82,183,136,0.2);color:var(--sage);}
+.send-badge.fail{background:rgba(231,111,81,0.15);color:#f4a261;}
+.send-badge.wait{background:var(--glass2);color:var(--text3);}
+
+/* ADMIN EMAIL INPUT */
+.admin-email-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:16px;}
+.admin-email-row input{font-family:'JetBrains Mono',monospace;font-size:13px;background:var(--glass);border:1px solid var(--border2);border-radius:var(--r-sm);color:var(--text1);padding:8px 14px;width:280px;outline:none;transition:border-color 0.15s;}
+.admin-email-row input:focus{border-color:var(--sage);}
+.admin-email-row input::placeholder{color:var(--text3);}
+
+/* PROGRESS BAR */
+.progress-bar-wrap{width:100%;height:6px;background:var(--glass2);border-radius:3px;margin-top:12px;overflow:hidden;}
+.progress-bar-fill{height:100%;background:var(--sage);border-radius:3px;transition:width 0.3s ease;}
+
+/* STEP CONNECTOR */
+.step-connector{width:2px;height:20px;background:var(--border);margin:0 0 0 39px;}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div style="display:flex;align-items:center;">
+    <a href="https://grm-hub.vercel.app/" class="hub-back" title="Back to Tool Hub">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style="vertical-align:middle;"><path d="M10 12L6 8l4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span>Hub</span>
+    </a>
+    <div class="nav-sep"></div>
+    <div class="logo">
+      <div class="logo-mark">G</div>
+      <div class="logo-text">Grassroots</div>
+    </div>
+    <div class="nav-sep"></div>
+    <div class="nav-label">Brand Training Agent</div>
+  </div>
+  <div class="topbar-right">
+    <div class="live-dot"></div>
+    <div class="tag-badge">INTERNAL · v4</div>
+  </div>
+</div>
+
+<div class="hero">
+  <div class="hero-eye">Ambassador Toolkit</div>
+  <h1 class="hero-title">Know every brand<br><em>before you hit the floor.</em></h1>
+  <p class="hero-sub">Upload your monthly schedule and ambassador assignments, then generate and send AI-researched training decks — story, benefits, ingredients, and talking points — personalized per ambassador.</p>
+</div>
+
+<div class="container">
+
+  <!-- ============ STEP 1: Upload Month Schedule ============ -->
+  <div class="step-card" id="step-1">
+    <div class="step-num active" id="sn1">1</div>
+    <div class="step-title">Upload Month Schedule</div>
+    <div class="step-sub">Upload the upcoming month's event/demo schedule (Promomash export). We'll auto-detect brands, dates, and locations.</div>
+    <div class="step-body">
+      <div class="upload-drop" id="sched-dropzone" onclick="document.getElementById('sched-fin').click()">
+        <div class="drop-icon">📋</div>
+        <div>
+          <div class="drop-title">Upload Promomash export</div>
+          <div class="drop-sub">CSV or XLSX · reads CAMPAIGN NAME, dates, venues</div>
+        </div>
+      </div>
+      <input type="file" id="sched-fin" accept=".csv,.xlsx,.xls" style="display:none">
+
+      <!-- Brand pills appear here after upload -->
+      <div id="sched-brands-area" class="brand-pills-area" style="display:none;">
+        <div style="font-size:10px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:var(--text3);font-family:'JetBrains Mono',monospace;margin-bottom:6px;">DETECTED BRANDS</div>
+        <div class="brand-pills" id="sched-brand-pills"></div>
+        <div class="summary-stats" id="sched-stats"></div>
+      </div>
+
+      <!-- Schedule table preview -->
+      <div id="sched-table-wrap" style="margin-top:16px;overflow-x:auto;max-height:300px;overflow-y:auto;display:none;"></div>
+    </div>
+  </div>
+
+  <div class="step-connector"></div>
+
+  <!-- ============ STEP 2: Upload Ambassador Assignments ============ -->
+  <div class="step-card locked" id="step-2">
+    <div class="step-num" id="sn2">2</div>
+    <div class="step-title">Upload Ambassador Assignments</div>
+    <div class="step-sub">Upload the ambassador contact list showing who is sampling which brand. We'll cross-reference with Step 1.</div>
+    <div class="step-body">
+      <div class="upload-drop" id="amb-dropzone" onclick="document.getElementById('amb-fin').click()">
+        <div class="drop-icon">👥</div>
+        <div>
+          <div class="drop-title">Upload ambassador contacts</div>
+          <div class="drop-sub">CSV or XLSX · needs Name, Email columns</div>
+        </div>
+      </div>
+      <input type="file" id="amb-fin" accept=".csv,.xlsx,.xls" style="display:none">
+
+      <div id="amb-preview" style="display:none;margin-top:16px;"></div>
+      <div id="amb-assign-table" style="display:none;margin-top:16px;overflow-x:auto;"></div>
+    </div>
+  </div>
+
+  <div class="step-connector"></div>
+
+  <!-- ============ STEP 3: Preview & Send Sample ============ -->
+  <div class="step-card locked" id="step-3">
+    <div class="step-num" id="sn3">3</div>
+    <div class="step-title">Preview & Send Sample</div>
+    <div class="step-sub">Generate the full training deck for all brands, preview the cards, download the PPTX, and send a sample to an admin for review before mass-sending.</div>
+    <div class="step-body">
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;">
+        <button class="btn btn-go" id="gen-btn" onclick="generateAll()">Generate Training Deck</button>
+        <button class="btn" id="dl-btn" onclick="downloadPptx()" style="display:none;">Download PPTX</button>
+      </div>
+
+      <!-- Research output area -->
+      <div class="output-area" id="output-area">
+        <div class="empty">
+          <span class="empty-g">🌿</span>
+          <div class="empty-title">No training cards yet</div>
+          <div class="empty-hint">Click "Generate Training Deck" to AI-research all brands</div>
+        </div>
+      </div>
+
+      <!-- Admin sample email section -->
+      <div id="admin-sample-section" style="display:none;margin-top:24px;padding-top:20px;border-top:1px solid var(--border);">
+        <div style="font-size:14px;font-weight:700;margin-bottom:8px;">Send Sample to Admin</div>
+        <div style="font-size:12px;color:var(--text3);margin-bottom:12px;">Send the full training deck to an admin email for review before sending to ambassadors.</div>
+        <div class="admin-email-row">
+          <input type="email" id="admin-email" placeholder="admin@grassrootsdemos.com" value="">
+          <button class="btn btn-go" id="send-sample-btn" onclick="sendAdminSample()">Send Sample</button>
+        </div>
+        <div id="admin-send-status" style="font-size:12px;margin-top:8px;"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="step-connector"></div>
+
+  <!-- ============ STEP 4: Send Training Emails ============ -->
+  <div class="step-card locked" id="step-4">
+    <div class="step-num" id="sn4">4</div>
+    <div class="step-title">Send Training Emails</div>
+    <div class="step-sub">Send individualized training emails to all ambassadors. Each ambassador gets ONE email with a single PPTX containing only slides for brands they represent.</div>
+    <div class="step-body">
+      <div id="send-summary" style="margin-bottom:16px;font-size:13px;color:var(--text2);"></div>
+      <div id="send-amb-cards" class="amb-preview"></div>
+      <div style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap;">
+        <button class="btn btn-go" id="send-dl-all" onclick="downloadAllZip()" style="display:none;">Download All as ZIP</button>
+        <button class="btn btn-go" id="send-email-all" onclick="sendAllEmails()" style="display:none;background:var(--sage);color:var(--ink);">Email All Ambassadors</button>
+      </div>
+      <div id="send-status-area" class="send-status" style="display:none;"></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ===================== STATE =====================
+let scheduleRows = [];
+let allBrands = [];
+let selBrands = [];
+let brandData = [];
+let ambassadorContacts = [];
+let ambassadorAssignments = [];
+
+const DEFAULTS = [
+  {name:'MaryRuth Organics',color:'#e63946'},
+  {name:'Tractor Beverages',color:'#52b788'},
+  {name:'Copra Coconuts',color:'#f4a261'},
+  {name:'Woodenspoon Herbs',color:'#a98467'},
+  {name:'Everiday Foods',color:'#4cc9f0'},
+];
+const PAL = ['#52b788','#e76f51','#4cc9f0','#a98467','#e63946','#f4a261','#90be6d','#c77dff'];
+
+function bColor(name) {
+  const n = name.toLowerCase();
+  const m = DEFAULTS.find(d => n.includes(d.name.toLowerCase().split(' ')[0]));
+  if (m) return m.color;
+  let h = 0; for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) % PAL.length;
+  return PAL[h];
+}
+
+// ===================== STEP MANAGEMENT =====================
+function unlockStep(num) {
+  const el = document.getElementById('step-' + num);
+  if (el) { el.classList.remove('locked'); }
+}
+
+function markStepDone(num) {
+  const sn = document.getElementById('sn' + num);
+  if (sn) { sn.classList.add('done'); sn.classList.remove('active'); sn.textContent = '✓'; }
+  // Activate next step number
+  const next = document.getElementById('sn' + (num + 1));
+  if (next && !next.classList.contains('done')) next.classList.add('active');
+}
+
+function updateSteps() {
+  // Step 1 done if schedule loaded
+  if (scheduleRows.length > 0) {
+    markStepDone(1);
+    unlockStep(2);
+  }
+  // Step 2 done if ambassador assignments cross-referenced
+  if (ambassadorContacts.length > 0 && scheduleRows.length > 0) {
+    markStepDone(2);
+    unlockStep(3);
+  }
+  // Step 3 done if brand data generated
+  if (brandData.length > 0 && ambassadorAssignments.length > 0) {
+    markStepDone(3);
+    unlockStep(4);
+    document.getElementById('send-dl-all').style.display = '';
+    document.getElementById('send-email-all').style.display = '';
+    renderSendStep();
+  }
+}
+
+// ===================== STEP 1: SCHEDULE UPLOAD =====================
+const schedDz = document.getElementById('sched-dropzone');
+schedDz.addEventListener('dragover', e => { e.preventDefault(); schedDz.classList.add('drag'); });
+schedDz.addEventListener('dragleave', () => schedDz.classList.remove('drag'));
+schedDz.addEventListener('drop', e => { e.preventDefault(); schedDz.classList.remove('drag'); if (e.dataTransfer.files[0]) processScheduleFile(e.dataTransfer.files[0]); });
+document.getElementById('sched-fin').addEventListener('change', e => { if (e.target.files[0]) processScheduleFile(e.target.files[0]); });
+
+function processScheduleFile(file) {
+  const ext = file.name.split('.').pop().toLowerCase();
+  if (ext === 'csv') {
+    Papa.parse(file, { header: true, skipEmptyLines: true, complete: r => loadScheduleData(r.data, file.name) });
+  } else {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const wb = XLSX.read(e.target.result, { type: 'array', cellDates: true });
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      loadScheduleData(XLSX.utils.sheet_to_json(ws, { defval: '', raw: false }), file.name);
+    };
+    reader.readAsArrayBuffer(file);
+  }
+}
+
+function loadScheduleData(data, fname) {
+  if (!data || !data.length) { alert('No data found.'); return; }
+  const keys = Object.keys(data[0]);
+  const dateCol = keys.find(k => /start date/i.test(k)) || keys.find(k => /date/i.test(k));
+  const timeCol = keys.find(k => /start time/i.test(k));
+  const endCol = keys.find(k => /end time/i.test(k));
+  const ambCol = keys.find(k => /user name/i.test(k)) || keys.find(k => /ambassador|rep/i.test(k));
+  const brandCol = keys.find(k => /campaign name/i.test(k)) || keys.find(k => /brand|campaign/i.test(k));
+  const venueCol = keys.find(k => /venue name/i.test(k)) || keys.find(k => /venue|store|location/i.test(k));
+  const cityCol = keys.find(k => /venue city/i.test(k)) || keys.find(k => /city/i.test(k));
+  const stateCol = keys.find(k => /venue state/i.test(k)) || keys.find(k => /state/i.test(k));
+  const statusCol = keys.find(k => /^status$/i.test(k)) || keys.find(k => /event status/i.test(k));
+
+  scheduleRows = data.map(r => {
+    let d = r[dateCol] || '';
+    if (d instanceof Date) d = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    else if (typeof d === 'string' && d.includes('T')) d = new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    else if (typeof d === 'string' && d.length > 10) d = d.substring(0, 10);
+    return {
+      date: d,
+      time: (r[timeCol] || '').toString(),
+      endTime: (r[endCol] || '').toString(),
+      ambassador: (r[ambCol] || '').toString().trim(),
+      brand: (r[brandCol] || '').toString().trim(),
+      venue: (r[venueCol] || '').toString().trim(),
+      city: (r[cityCol] || '').toString().trim(),
+      state: (r[stateCol] || '').toString().trim(),
+      status: (r[statusCol] || '').toString().trim()
+    };
+  }).filter(r => r.ambassador && r.brand).sort((a, b) => {
+    if (a.date < b.date) return -1; if (a.date > b.date) return 1;
+    return a.ambassador.localeCompare(b.ambassador);
+  });
+
+  const brands = [...new Set(scheduleRows.map(r => r.brand))].sort();
+  const ambs = [...new Set(scheduleRows.map(r => r.ambassador))].sort();
+  const dates = [...new Set(scheduleRows.map(r => r.date))].sort();
+
+  allBrands = brands;
+  selBrands = [...brands];
+
+  // Update dropzone to show success
+  schedDz.innerHTML = '<div class="drop-icon" style="background:rgba(82,183,136,0.15);border-color:var(--sage);">✓</div><div><div class="drop-title" style="color:var(--sage);">' + fname + '</div><div class="drop-sub">' + scheduleRows.length + ' events loaded · Click to replace</div></div>';
+
+  // Show brand pills
+  const brandsArea = document.getElementById('sched-brands-area');
+  brandsArea.style.display = 'block';
+  renderScheduleBrandPills();
+
+  // Show summary stats
+  document.getElementById('sched-stats').innerHTML =
+    '<div class="stat-chip"><strong>' + brands.length + '</strong> brands</div>' +
+    '<div class="stat-chip"><strong>' + scheduleRows.length + '</strong> events</div>' +
+    '<div class="stat-chip"><strong>' + ambs.length + '</strong> ambassadors</div>' +
+    '<div class="stat-chip"><strong>' + dates.length + '</strong> dates</div>';
+
+  // Show schedule table
+  renderSchedulePreview();
+  updateSteps();
+
+  // If ambassadors already loaded, rebuild assignments
+  if (ambassadorContacts.length > 0) {
+    buildAssignments();
+    renderAssignmentTable();
+  }
+}
+
+function renderScheduleBrandPills() {
+  const el = document.getElementById('sched-brand-pills');
+  el.innerHTML = allBrands.map(b => {
+    const c = bColor(b);
+    return '<span class="bpill on"><span class="pd" style="background:' + c + '"></span>' + b + '</span>';
+  }).join('');
+}
+
+function renderSchedulePreview() {
+  const wrap = document.getElementById('sched-table-wrap');
+  wrap.style.display = 'block';
+  if (!scheduleRows.length) {
+    wrap.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text3);">No events to display.</div>';
+    return;
+  }
+  let html = '<table class="sched-tbl"><thead><tr><th>Date</th><th>Time</th><th>Ambassador</th><th>Brand</th><th>Store</th><th>Location</th></tr></thead><tbody>';
+  const rows = scheduleRows.slice(0, 50);
+  rows.forEach(r => {
+    const loc = [r.city, r.state].filter(Boolean).join(', ');
+    html += '<tr><td class="date-cell">' + r.date + '</td><td class="date-cell">' + r.time + (r.endTime ? ' – ' + r.endTime : '') + '</td><td class="amb-cell">' + r.ambassador + '</td><td class="brand-cell" style="color:' + bColor(r.brand) + '">' + r.brand + '</td><td class="venue-cell">' + r.venue + '</td><td class="venue-cell">' + loc + '</td></tr>';
+  });
+  html += '</tbody></table>';
+  if (scheduleRows.length > 50) {
+    html += '<div style="text-align:center;padding:12px;font-size:11px;color:var(--text3);">Showing first 50 of ' + scheduleRows.length + ' events</div>';
+  }
+  wrap.innerHTML = html;
+}
+
+// ===================== STEP 2: AMBASSADOR ASSIGNMENTS =====================
+const ambDz = document.getElementById('amb-dropzone');
+ambDz.addEventListener('dragover', e => { e.preventDefault(); ambDz.classList.add('drag'); });
+ambDz.addEventListener('dragleave', () => ambDz.classList.remove('drag'));
+ambDz.addEventListener('drop', e => { e.preventDefault(); ambDz.classList.remove('drag'); if (e.dataTransfer.files[0]) handleAmbUpload(e.dataTransfer.files[0]); });
+document.getElementById('amb-fin').addEventListener('change', e => { if (e.target.files[0]) handleAmbUpload(e.target.files[0]); });
+
+function handleAmbUpload(file) {
+  const ext = file.name.split('.').pop().toLowerCase();
+  if (ext === 'csv') {
+    Papa.parse(file, { header: true, skipEmptyLines: true, complete: r => parseAmbContacts(r.data, file.name) });
+  } else {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const wb = XLSX.read(e.target.result, { type: 'array' });
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const allRows = XLSX.utils.sheet_to_json(ws, { defval: '', raw: false, header: 1 });
+      parseAmbContactsFromRows(allRows, file.name);
+    };
+    reader.readAsArrayBuffer(file);
+  }
+}
+
+function parseAmbContacts(data, fname) {
+  const keys = Object.keys(data[0] || {});
+  const nameKey = keys.find(k => /^name$/i.test(k)) || keys.find(k => /name|ambassador/i.test(k)) || keys[0];
+  const emailKey = keys.find(k => /email/i.test(k));
+  const phoneKey = keys.find(k => /phone/i.test(k));
+
+  ambassadorContacts = data.map(r => ({
+    name: (r[nameKey] || '').toString().trim().replace(/^\n+/, ''),
+    email: (r[emailKey] || '').toString().trim().replace(/^\n+/, ''),
+    phone: phoneKey ? (r[phoneKey] || '').toString().trim().replace(/^\n+/, '') : ''
+  })).filter(c => c.name && c.name.length > 1);
+
+  finishAmbUpload(fname);
+}
+
+function parseAmbContactsFromRows(rows, fname) {
+  let headerIdx = -1;
+  let nameCol = -1, emailCol = -1, phoneCol = -1;
+  for (let i = 0; i < Math.min(rows.length, 10); i++) {
+    const row = rows[i].map(c => (c || '').toString().trim().toLowerCase());
+    for (let j = 0; j < row.length; j++) {
+      if (row[j] === 'name' || row[j] === 'full name' || row[j] === 'ambassador name' || row[j] === 'ambassador') {
+        headerIdx = i; nameCol = j;
+      }
+      if (row[j] === 'email' || row[j] === 'email address' || row[j] === 'e-mail') {
+        headerIdx = i; emailCol = j;
+      }
+      if (row[j] === 'phone' || row[j] === 'phone#' || row[j] === 'phone number' || row[j] === 'cell') {
+        phoneCol = j;
+      }
+    }
+    if (headerIdx >= 0) break;
+  }
+
+  if (headerIdx < 0) {
+    headerIdx = 0;
+    if (rows.length > 1) {
+      const row1 = rows[1] || [];
+      for (let j = 0; j < row1.length; j++) {
+        const v = (row1[j] || '').toString().trim();
+        if (v.includes('@') && emailCol < 0) emailCol = j;
+        if (/^[A-Z][a-z]+ [A-Z][a-z]+/.test(v) && nameCol < 0) nameCol = j;
+      }
+    }
+  }
+  if (nameCol < 0) nameCol = 0;
+
+  ambassadorContacts = [];
+  for (let i = headerIdx + 1; i < rows.length; i++) {
+    const row = rows[i];
+    if (!row || !row.length) continue;
+    const name = (row[nameCol] || '').toString().trim().replace(/^\n+/, '');
+    if (!name || name.length < 2) continue;
+    const email = emailCol >= 0 ? (row[emailCol] || '').toString().trim().replace(/^\n+/, '') : '';
+    const phone = phoneCol >= 0 ? (row[phoneCol] || '').toString().trim().replace(/^\n+/, '') : '';
+    if (name.toLowerCase() === 'name' || name.toLowerCase() === 'ambassador') continue;
+    ambassadorContacts.push({ name, email, phone });
+  }
+
+  finishAmbUpload(fname);
+}
+
+function finishAmbUpload(fname) {
+  // Deduplicate contacts by email (or name if no email)
+  const dedupMap = new Map();
+  ambassadorContacts.forEach(c => {
+    const key = c.email ? c.email.toLowerCase() : normalizeName(c.name);
+    if (!dedupMap.has(key)) dedupMap.set(key, c);
+  });
+  ambassadorContacts = [...dedupMap.values()];
+
+  // Update dropzone
+  ambDz.innerHTML = '<div class="drop-icon" style="background:rgba(82,183,136,0.15);border-color:var(--sage);">✓</div><div><div class="drop-title" style="color:var(--sage);">' + ambassadorContacts.length + ' contacts loaded</div><div class="drop-sub">' + fname + ' · Click to replace</div></div>';
+
+  // Show contacts preview
+  const prev = document.getElementById('amb-preview');
+  prev.style.display = 'block';
+  const withEmail = ambassadorContacts.filter(c => c.email);
+  const noEmail = ambassadorContacts.filter(c => !c.email);
+  let html = '<div style="margin-bottom:8px;font-size:12px;"><strong style="color:var(--text1);">' + fname + '</strong> · ' + ambassadorContacts.length + ' contacts · <span style="color:var(--sage);">' + withEmail.length + ' with email</span>';
+  if (noEmail.length) html += ' · <span style="color:var(--ember);">' + noEmail.length + ' missing email</span>';
+  html += '</div><div style="display:flex;flex-wrap:wrap;gap:5px;">';
+  ambassadorContacts.forEach(c => {
+    const col = c.email ? 'var(--sage)' : 'var(--ember)';
+    html += '<span style="font-size:11px;padding:3px 10px;border-radius:12px;background:var(--glass2);border:1px solid var(--border2);color:var(--text2);"><span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:' + col + ';margin-right:4px;"></span>' + c.name + '</span>';
+  });
+  html += '</div>';
+  prev.innerHTML = html;
+
+  // Cross-reference with schedule and build assignments
+  if (scheduleRows.length > 0) {
+    buildAssignments();
+    renderAssignmentTable();
+  }
+
+  updateSteps();
+}
+
+function normalizeName(n) {
+  return n.toLowerCase().replace(/[^a-z ]/g, '').trim().replace(/\s+/g, ' ');
+}
+
+function buildAssignments() {
+  const schedMap = {};
+  scheduleRows.forEach(r => {
+    const key = normalizeName(r.ambassador);
+    if (!schedMap[key]) schedMap[key] = { name: r.ambassador, brands: new Set() };
+    schedMap[key].brands.add(r.brand);
+  });
+
+  ambassadorAssignments = [];
+  ambassadorContacts.forEach(contact => {
+    const cNorm = normalizeName(contact.name);
+    let schedEntry = schedMap[cNorm];
+    if (!schedEntry) {
+      const cParts = cNorm.split(' ');
+      for (const [key, val] of Object.entries(schedMap)) {
+        const kParts = key.split(' ');
+        if (cParts[0] === kParts[0] && cParts[cParts.length - 1] === kParts[kParts.length - 1]) {
+          schedEntry = val; break;
+        }
+        if (cParts.length >= 2 && kParts.length >= 2) {
+          if (cParts[cParts.length - 1] === kParts[kParts.length - 1] && cParts[0][0] === kParts[0][0]) {
+            schedEntry = val; break;
+          }
+        }
+      }
+    }
+    if (!schedEntry) return;
+
+    const brands = [...schedEntry.brands];
+    ambassadorAssignments.push({
+      name: contact.name,
+      email: contact.email,
+      phone: contact.phone,
+      brands: brands.sort(),
+      matchedBrands: brands.sort()
+    });
+  });
+
+  ambassadorAssignments.sort((a, b) => a.name.localeCompare(b.name));
+}
+
+function renderAssignmentTable() {
+  const el = document.getElementById('amb-assign-table');
+  el.style.display = 'block';
+  if (!ambassadorAssignments.length) {
+    el.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text3);">No matching assignments found. Make sure schedule ambassador names match contact names.</div>';
+    return;
+  }
+
+  let html = '<div style="font-size:13px;color:var(--text2);margin-bottom:8px;"><strong style="color:var(--text1);">' + ambassadorAssignments.length + '</strong> ambassadors matched to brands</div>';
+  html += '<table class="assign-table"><thead><tr><th>Ambassador</th><th>Email</th><th>Assigned Brands</th></tr></thead><tbody>';
+  ambassadorAssignments.forEach(a => {
+    const brandTags = a.brands.map(b => '<span class="amb-brand-tag"><span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:' + bColor(b) + '"></span>' + b + '</span>').join('');
+    html += '<tr><td style="font-weight:600;">' + a.name + '</td><td style="font-family:\'JetBrains Mono\',monospace;font-size:11px;color:var(--text3);">' + (a.email || '<span style="color:var(--ember);font-style:italic;">No email</span>') + '</td><td>' + brandTags + '</td></tr>';
+  });
+  html += '</tbody></table>';
+  el.innerHTML = html;
+}
+
+// ===================== STEP 3: GENERATE & PREVIEW =====================
+async function generateAll() {
+  const btn = document.getElementById('gen-btn');
+  btn.disabled = true; btn.textContent = 'Researching…';
+  const out = document.getElementById('output-area');
+  out.innerHTML = '';
+  brandData = [];
+
+  for (const brand of selBrands) {
+    const id = 'blk_' + brand.replace(/\W+/g, '_');
+    out.innerHTML += '<div class="brand-block" id="' + id + '"><div class="bhdr"><div class="bhdr-name" style="color:' + bColor(brand) + '">' + brand + '</div><div class="bhdr-line" style="background:linear-gradient(to right,' + bColor(brand) + '44,transparent)"></div><div class="bhdr-ct">loading…</div></div><div class="loading-wrap"><div class="spin"></div><div><div class="l-brand">' + brand + '</div><div class="l-step" id="' + id + '_s">Searching brand website &amp; nutritional panels…</div></div></div></div>';
+  }
+
+  for (const brand of selBrands) await doCard(brand);
+
+  btn.disabled = false; btn.textContent = 'Regenerate';
+  if (brandData.length > 0) {
+    document.getElementById('dl-btn').style.display = '';
+    document.getElementById('admin-sample-section').style.display = '';
+    updateSteps();
+  }
+}
+
+async function doCard(brand) {
+  const id = 'blk_' + brand.replace(/\W+/g, '_');
+  try {
+    const prompt = 'You are a brand education researcher for a field marketing company that runs in-store demos at Whole Foods and Sprouts. Research "' + brand + '" using their website and product/nutritional information.\n\nReturn ONLY a valid JSON object — no markdown, no backticks, nothing else:\n\n{\n  "brand": "' + brand + '",\n  "tagline": "official tagline or key positioning line (max 12 words)",\n  "founded": "founding year + 1-sentence origin story",\n  "mission": "brand mission and values in 1-2 sentences",\n  "productFocus": "what they make and who it is for in 2 sentences",\n  "targetAudience": "who buys this brand in plain language",\n  "keyBenefits": ["benefit 1 (max 8 words)","benefit 2","benefit 3","benefit 4"],\n  "certifications": ["certification 1","certification 2"],\n  "talkingPoints": [\n    "Natural conversational thing an ambassador says to a Whole Foods or Sprouts shopper",\n    "Second talking point",\n    "Third talking point"\n  ],\n  "categoryContext": "2 sentences on the broader product category — why consumers are choosing it and what the trend is",\n  "ingredients": [\n    {"name":"key ingredient name","benefit":"what it does for the body in one clear sentence"},\n    {"name":"ingredient 2","benefit":"..."},\n    {"name":"ingredient 3","benefit":"..."},\n    {"name":"ingredient 4","benefit":"..."}\n  ]\n}';
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 55000);
+    let resp;
+    try {
+      resp = await fetch('/api/generate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, signal: controller.signal, body: JSON.stringify({
+        model: 'claude-sonnet-4-6', max_tokens: 2048,
+        tools: [{ type: 'web_search_20250305', name: 'web_search' }],
+        messages: [{ role: 'user', content: prompt }]
+      })});
+    } finally { clearTimeout(timeout); }
+    if (!resp.ok) { const errText = await resp.text().catch(() => 'Unknown error'); throw new Error('API ' + resp.status + ': ' + errText.substring(0, 120)); }
+    const data = await resp.json();
+    if (!data.content) throw new Error(data.error?.message || 'Empty response');
+    const text = data.content.filter(b => b.type === 'text').map(b => b.text).join('');
+    const s = text.indexOf('{'), e = text.lastIndexOf('}');
+    if (s === -1) throw new Error('No JSON in response');
+    let raw = text.slice(s, e + 1);
+    raw = raw.replace(/,\s*([}\]])/g, '$1').replace(/[\x00-\x1f]/g, ' ').replace(/([^\\])\\([^"\\\/bfnrtu])/g, '$1\\\\$2');
+    let parsed; try { parsed = JSON.parse(raw); } catch (e2) { raw = raw.replace(/"([^"]*)"(\s*:\s*")((?:[^"\\]|\\.)*)"/g, function(m, k, sep, v) { return '"' + k + '"' + sep + v.replace(/(?<!\\)"/g, '\\"') + '"'; }); parsed = JSON.parse(raw); }
+    brandData.push(parsed);
+    render(id, parsed);
+  } catch (err) {
+    const blk = document.getElementById(id);
+    if (blk) blk.innerHTML = '<div class="bhdr"><div class="bhdr-name" style="color:' + bColor(brand) + '">' + brand + '</div><div class="bhdr-line"></div></div><div class="err-wrap"><span>Failed: <strong>' + brand + '</strong> — ' + err.message + '</span><button class="btn" onclick="doCard(' + JSON.stringify(brand) + ')">Retry</button></div>';
+  }
+}
+
+function render(id, d) {
+  const c = bColor(d.brand);
+  const blk = document.getElementById(id);
+  if (!blk) return;
+  const bTags = (d.keyBenefits || []).map(function(b) { return '<span class="tg tg-g">' + b + '</span>'; }).join('');
+  const cTags = (d.certifications || []).map(function(ct) { return '<span class="tg tg-m">✓ ' + ct + '</span>'; }).join('');
+  const tps = (d.talkingPoints || []).map(function(t, i) { return '<div class="tp-row"><div class="tp-idx">' + (i + 1) + '</div><div class="tp-txt">' + t + '</div></div>'; }).join('');
+  const ingrs = (d.ingredients || []).map(function(ig) { return '<div class="ingr-row"><div class="ingr-name">' + ig.name + '</div><div class="ingr-desc">' + ig.benefit + '</div></div>'; }).join('');
+  blk.innerHTML =
+    '<div class="bhdr">' +
+      '<div class="bhdr-name" style="color:' + c + '">' + d.brand + '</div>' +
+      '<div class="bhdr-line" style="background:linear-gradient(to right,' + c + '44,transparent)"></div>' +
+      '<div class="bhdr-ct">' + (2 + (d.ingredients && d.ingredients.length ? 1 : 0)) + ' slides</div>' +
+    '</div>' +
+    '<div class="slides-pair">' +
+      '<div class="slide-card">' +
+        '<div class="slide-top">' +
+          '<div><div class="slide-type">Brand Story</div><div class="slide-brand" style="color:' + c + '">' + d.brand + '</div></div>' +
+          '<div class="slide-num">01</div>' +
+          '<div class="slide-accent-bar" style="background:' + c + '"></div>' +
+        '</div>' +
+        '<div class="slide-body">' +
+          '<div><div class="fval quote">“' + (d.tagline || '—') + '”</div></div>' +
+          '<div class="mini2">' +
+            '<div class="mini-cell"><div class="flbl">Founded</div><div class="fval dim" style="font-size:12px">' + (d.founded || '—') + '</div></div>' +
+            '<div class="mini-cell"><div class="flbl">Who it’s for</div><div class="fval dim" style="font-size:12px">' + (d.targetAudience || '—') + '</div></div>' +
+          '</div>' +
+          '<div><div class="flbl">Mission</div><div class="fval dim">' + (d.mission || '—') + '</div></div>' +
+          '<div><div class="flbl">Products</div><div class="fval dim">' + (d.productFocus || '—') + '</div></div>' +
+          '<div class="hdiv"></div>' +
+          '<div><div class="flbl">Key benefits</div><div class="tags" style="margin-top:6px">' + bTags + '</div></div>' +
+          (cTags ? '<div><div class="flbl">Certifications</div><div class="tags" style="margin-top:6px">' + cTags + '</div></div>' : '') +
+          '<div class="hdiv"></div>' +
+          '<div><div class="flbl">Ambassador talking points</div><div class="tp-list" style="margin-top:8px">' + tps + '</div></div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="slide-card">' +
+        '<div class="slide-top">' +
+          '<div><div class="slide-type">Ingredients & Category</div><div class="slide-brand" style="color:' + c + '">' + d.brand + '</div></div>' +
+          '<div class="slide-num">02</div>' +
+          '<div class="slide-accent-bar" style="background:' + c + '"></div>' +
+        '</div>' +
+        '<div class="slide-body">' +
+          '<div><div class="flbl">Why this category is growing</div><div class="fval dim" style="margin-top:5px">' + (d.categoryContext || '—') + '</div></div>' +
+          '<div class="hdiv"></div>' +
+          '<div><div class="flbl">Key ingredients & what they do</div><div class="ingr-table" style="margin-top:10px">' + ingrs + '</div></div>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+}
+
+// ===================== PPTX GENERATION =====================
+function buildPptx(brandsToInclude) {
+  var items = brandsToInclude || brandData;
+  var pptx = new PptxGenJS();
+  pptx.layout = 'LAYOUT_WIDE';
+  pptx.defineSlideMaster({ title: 'GRASSROOTS', background: { color: '0D1A0F' }, objects: [
+    { rect: { x: 0, y: 0, w: '100%', h: 0.55, fill: { color: '162418' } } },
+    { text: { text: 'GRASSROOTS', options: { x: 0.5, y: 0.12, w: 2, h: 0.3, fontSize: 10, fontFace: 'Arial', color: '52B788', bold: true, letterSpacing: 3 } } },
+    { text: { text: 'Brand Training Agent', options: { x: 2.6, y: 0.12, w: 2, h: 0.3, fontSize: 9, fontFace: 'Arial', color: '6B6452' } } },
+    { line: { x1: 0.5, y1: 7.2, x2: 12.8, y2: 7.2, line: { color: '2D6A4F', width: 0.5 } } },
+    { text: { text: 'INTERNAL · GRASSROOTS MARKETING LLC', options: { x: 0.5, y: 7.25, w: 4, h: 0.25, fontSize: 7, fontFace: 'Arial', color: '6B6452' } } }
+  ]});
+
+  var ts = pptx.addSlide({ masterName: 'GRASSROOTS' });
+  ts.addText('Brand Training\nCards', { x: 0.8, y: 1.5, w: 8, h: 2.5, fontSize: 44, fontFace: 'Arial', color: 'F0ECE2', bold: true, lineSpacingMultiple: 1.1 });
+  ts.addText(items.length + ' brand' + (items.length > 1 ? 's' : '') + ' · ' + new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }), { x: 0.8, y: 4.0, w: 6, h: 0.4, fontSize: 14, fontFace: 'Arial', color: '52B788' });
+  ts.addShape(pptx.shapes.RECTANGLE, { x: 0.8, y: 3.8, w: 2, h: 0.04, fill: { color: '2D6A4F' } });
+
+  items.forEach(function(d) {
+    var ac = bColor(d.brand).replace('#', '');
+
+    var s1 = pptx.addSlide({ masterName: 'GRASSROOTS' });
+    s1.addShape(pptx.shapes.RECTANGLE, { x: 0, y: 0.55, w: 0.06, h: 1.2, fill: { color: ac } });
+    s1.addText('BRAND STORY', { x: 0.5, y: 0.7, w: 3, h: 0.3, fontSize: 8, fontFace: 'Arial', color: ac, bold: true, letterSpacing: 3 });
+    s1.addText(d.brand, { x: 0.5, y: 1.0, w: 8, h: 0.6, fontSize: 28, fontFace: 'Arial', color: 'F0ECE2', bold: true });
+    if (d.tagline) s1.addText('"' + d.tagline + '"', { x: 0.5, y: 1.6, w: 8, h: 0.35, fontSize: 12, fontFace: 'Arial', color: ac, italic: true });
+    var rows1 = [];
+    if (d.founded) rows1.push([{ text: 'Founded', options: { bold: true, color: 'A89F8A', fontSize: 9, fontFace: 'Arial' } }, { text: d.founded, options: { color: 'F0ECE2', fontSize: 9, fontFace: 'Arial' } }]);
+    if (d.targetAudience) rows1.push([{ text: 'Audience', options: { bold: true, color: 'A89F8A', fontSize: 9, fontFace: 'Arial' } }, { text: d.targetAudience, options: { color: 'F0ECE2', fontSize: 9, fontFace: 'Arial' } }]);
+    if (d.mission) rows1.push([{ text: 'Mission', options: { bold: true, color: 'A89F8A', fontSize: 9, fontFace: 'Arial' } }, { text: d.mission, options: { color: 'F0ECE2', fontSize: 9, fontFace: 'Arial' } }]);
+    if (d.productFocus) rows1.push([{ text: 'Products', options: { bold: true, color: 'A89F8A', fontSize: 9, fontFace: 'Arial' } }, { text: d.productFocus, options: { color: 'F0ECE2', fontSize: 9, fontFace: 'Arial' } }]);
+    if (rows1.length) s1.addTable(rows1, { x: 0.5, y: 2.1, w: 12, colW: [1.4, 10.6], border: { type: 'none' }, rowH: 0.45, autoPage: false, color: 'F0ECE2', fill: { color: '162418' } });
+    var bens = (d.keyBenefits || []).join('  ·  ');
+    if (bens) s1.addText('KEY BENEFITS:  ' + bens, { x: 0.5, y: rows1.length ? 2.1 + rows1.length * 0.45 + 0.2 : 4.0, w: 12, h: 0.35, fontSize: 9, fontFace: 'Arial', color: '95D5B2', bold: false });
+    var certs = (d.certifications || []).join('  ·  ');
+    var bY = rows1.length ? 2.1 + rows1.length * 0.45 + 0.2 : 4.0;
+    if (certs) s1.addText('CERTIFICATIONS:  ' + certs, { x: 0.5, y: bY + 0.4, w: 12, h: 0.35, fontSize: 9, fontFace: 'Arial', color: 'A89F8A' });
+
+    var s2 = pptx.addSlide({ masterName: 'GRASSROOTS' });
+    s2.addShape(pptx.shapes.RECTANGLE, { x: 0, y: 0.55, w: 0.06, h: 1.2, fill: { color: ac } });
+    s2.addText('TALKING POINTS', { x: 0.5, y: 0.7, w: 3, h: 0.3, fontSize: 8, fontFace: 'Arial', color: ac, bold: true, letterSpacing: 3 });
+    s2.addText(d.brand, { x: 0.5, y: 1.0, w: 8, h: 0.6, fontSize: 28, fontFace: 'Arial', color: 'F0ECE2', bold: true });
+    s2.addText('What to say to shoppers at the shelf:', { x: 0.5, y: 1.6, w: 8, h: 0.3, fontSize: 10, fontFace: 'Arial', color: 'A89F8A', italic: true });
+    (d.talkingPoints || []).forEach(function(tp, ti) {
+      var tpY = 2.1 + ti * 0.9;
+      s2.addShape(pptx.shapes.OVAL, { x: 0.5, y: tpY + 0.05, w: 0.35, h: 0.35, fill: { color: ac } });
+      s2.addText('' + (ti + 1), { x: 0.5, y: tpY + 0.05, w: 0.35, h: 0.35, fontSize: 11, fontFace: 'Arial', color: '0D1A0F', bold: true, align: 'center', valign: 'middle' });
+      s2.addText(tp, { x: 1.1, y: tpY, w: 11.2, h: 0.6, fontSize: 12, fontFace: 'Arial', color: 'F0ECE2', valign: 'top' });
+    });
+    if (d.categoryContext) {
+      var ctxY = 2.1 + (d.talkingPoints || []).length * 0.9 + 0.3;
+      s2.addShape(pptx.shapes.RECTANGLE, { x: 0.5, y: ctxY, w: 12, h: 0.03, fill: { color: '2D6A4F' } });
+      s2.addText('CATEGORY CONTEXT', { x: 0.5, y: ctxY + 0.15, w: 3, h: 0.25, fontSize: 8, fontFace: 'Arial', color: ac, bold: true, letterSpacing: 2 });
+      s2.addText(d.categoryContext, { x: 0.5, y: ctxY + 0.4, w: 12, h: 0.5, fontSize: 10, fontFace: 'Arial', color: 'A89F8A' });
+    }
+
+    if (d.ingredients && d.ingredients.length) {
+      var s3 = pptx.addSlide({ masterName: 'GRASSROOTS' });
+      s3.addShape(pptx.shapes.RECTANGLE, { x: 0, y: 0.55, w: 0.06, h: 1.2, fill: { color: ac } });
+      s3.addText('KEY INGREDIENTS', { x: 0.5, y: 0.7, w: 3, h: 0.3, fontSize: 8, fontFace: 'Arial', color: ac, bold: true, letterSpacing: 3 });
+      s3.addText(d.brand, { x: 0.5, y: 1.0, w: 8, h: 0.6, fontSize: 28, fontFace: 'Arial', color: 'F0ECE2', bold: true });
+      var hdr = [[{ text: 'Ingredient', options: { bold: true, color: '95D5B2', fontSize: 10, fontFace: 'Arial', fill: { color: '1A2E1F' } } }, { text: 'What it does', options: { bold: true, color: '95D5B2', fontSize: 10, fontFace: 'Arial', fill: { color: '1A2E1F' } } }]];
+      var iRows = d.ingredients.map(function(ing) {
+        return [{ text: ing.name, options: { bold: true, color: 'F0ECE2', fontSize: 10, fontFace: 'Arial', fill: { color: '162418' } } }, { text: ing.benefit, options: { color: 'A89F8A', fontSize: 10, fontFace: 'Arial', fill: { color: '162418' } } }];
+      });
+      s3.addTable(hdr.concat(iRows), { x: 0.5, y: 1.8, w: 12, colW: [3, 9], border: { type: 'solid', color: '2D6A4F', pt: 0.5 }, rowH: 0.5, autoPage: false });
+    }
+  });
+
+  return pptx;
+}
+
+async function downloadPptx() {
+  var pptx = buildPptx(null);
+  var b64 = await pptx.write({ outputType: 'base64' });
+  var blob = base64ToBlob(b64, 'application/vnd.openxmlformats-officedocument.presentationml.presentation');
+  var url = URL.createObjectURL(blob);
+  var link = document.createElement('a');
+  link.href = url;
+  link.download = 'Brand_Training_' + new Date().toISOString().slice(0, 10) + '.pptx';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+}
+
+function base64ToBlob(b64, mime) {
+  var bin = atob(b64);
+  var len = bin.length;
+  var bytes = new Uint8Array(len);
+  for (var i = 0; i < len; i++) bytes[i] = bin.charCodeAt(i);
+  return new Blob([bytes], { type: mime });
+}
+
+// ===================== ADMIN SAMPLE EMAIL =====================
+async function sendAdminSample() {
+  var emailInput = document.getElementById('admin-email');
+  var email = emailInput.value.trim();
+  if (!email || !email.includes('@')) {
+    alert('Please enter a valid admin email address.');
+    return;
+  }
+
+  var btn = document.getElementById('send-sample-btn');
+  var statusEl = document.getElementById('admin-send-status');
+  btn.disabled = true; btn.textContent = 'Sending…';
+  statusEl.innerHTML = '<div class="spin" style="width:16px;height:16px;display:inline-block;vertical-align:middle;margin-right:8px;"></div>Generating and sending sample…';
+
+  try {
+    var pptx = buildPptx(null);
+    var b64 = await pptx.write({ outputType: 'base64' });
+
+    var brandList = brandData.map(function(b) { return b.brand; }).join(', ');
+    var resp = await fetch('/api/send', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({
+      to: email,
+      subject: 'Brand Training Deck Sample for Review — Grassroots Marketing',
+      html: '<div style="font-family:Arial,sans-serif;max-width:600px;"><h2 style="color:#2d6a4f;">Training Deck Sample for Review</h2><p>Attached is the full training deck with <strong>' + brandData.length + ' brand' + (brandData.length > 1 ? 's' : '') + '</strong> for your review before sending to ambassadors.</p><p><strong>Brands included:</strong> ' + brandList + '</p><p>Please review and confirm when ready to send to all ambassadors.</p><p style="color:#666;font-size:12px;">— Grassroots Marketing Team (via Brand Training Agent)</p></div>',
+      attachment: b64,
+      filename: 'Brand_Training_Sample_' + new Date().toISOString().slice(0, 10) + '.pptx'
+    })});
+
+    if (resp.ok) {
+      statusEl.innerHTML = '<span style="color:var(--sage);">✓ Sample sent to ' + email + '</span>';
+    } else {
+      var err = await resp.json();
+      throw new Error(err.error || 'Send failed');
+    }
+  } catch (err) {
+    statusEl.innerHTML = '<span style="color:var(--ember);">Failed: ' + err.message + '</span>';
+  }
+  btn.disabled = false; btn.textContent = 'Send Sample';
+}
+
+// ===================== STEP 4: SEND TRAINING EMAILS =====================
+function renderSendStep() {
+  var summary = document.getElementById('send-summary');
+  var withEmail = ambassadorAssignments.filter(function(a) { return a.email; });
+  var allMatchedBrands = new Set();
+  ambassadorAssignments.forEach(function(a) { a.matchedBrands.forEach(function(b) { allMatchedBrands.add(b); }); });
+  summary.innerHTML = '<strong style="color:var(--text1);">' + ambassadorAssignments.length + '</strong> ambassadors matched · <strong style="color:var(--text1);">' + withEmail.length + '</strong> with email · <strong style="color:var(--text1);">' + allMatchedBrands.size + '</strong> brands covered';
+
+  var el = document.getElementById('send-amb-cards');
+  if (!ambassadorAssignments.length) {
+    el.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text3);">No matching assignments found.</div>';
+    return;
+  }
+
+  var html = '';
+  ambassadorAssignments.forEach(function(a, i) {
+    var brandTags = a.matchedBrands.map(function(b) { return '<span class="amb-brand-tag"><span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:' + bColor(b) + '"></span>' + b + '</span>'; }).join('');
+    var matchedBrandData = brandData.filter(function(bd) { return a.matchedBrands.includes(bd.brand); });
+    var slideCount = matchedBrandData.reduce(function(sum, bd) { return sum + 2 + (bd.ingredients && bd.ingredients.length ? 1 : 0); }, 0);
+    html += '<div class="amb-card" id="acard-' + i + '"><div class="amb-card-hdr" onclick="document.getElementById(\'acard-' + i + '\').classList.toggle(\'open\')"><div><div class="amb-card-name">' + a.name + '</div><div class="amb-card-email">' + (a.email || '<span class="amb-no-email">No email</span>') + '</div></div><div class="amb-card-meta"><div class="amb-card-count">' + slideCount + ' slides · ' + a.matchedBrands.length + ' brand' + (a.matchedBrands.length > 1 ? 's' : '') + '</div><button class="btn" onclick="event.stopPropagation();downloadIndividual(' + i + ')" style="font-size:11px;padding:5px 12px;">⬇</button></div></div><div class="amb-card-body"><div style="margin-bottom:8px;">' + brandTags + '</div></div></div>';
+  });
+  el.innerHTML = html;
+}
+
+async function downloadIndividual(idx) {
+  var a = ambassadorAssignments[idx];
+  if (!a) return;
+  try {
+    var ambBrandData = brandData.filter(function(bd) { return a.matchedBrands.includes(bd.brand); });
+    if (!ambBrandData.length) { alert('No brand data found for ' + a.name); return; }
+    var pptx = buildPptx(ambBrandData);
+    var b64 = await pptx.write({ outputType: 'base64' });
+    var blob = base64ToBlob(b64, 'application/vnd.openxmlformats-officedocument.presentationml.presentation');
+    var url = URL.createObjectURL(blob);
+    var link = document.createElement('a');
+    link.href = url;
+    link.download = a.name.replace(/[^a-zA-Z0-9 ]/g, '').replace(/\s+/g, '_') + '_Training.pptx';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  } catch (err) {
+    alert('Error creating PPTX for ' + a.name + ': ' + err.message);
+  }
+}
+
+async function downloadAllZip() {
+  if (!ambassadorAssignments.length || !brandData.length) { alert('No training data to download.'); return; }
+  var btn = document.getElementById('send-dl-all');
+  btn.disabled = true; btn.textContent = 'Creating ZIP…';
+  try {
+    var zip = new JSZip();
+    for (var ai = 0; ai < ambassadorAssignments.length; ai++) {
+      var a = ambassadorAssignments[ai];
+      if (!a.matchedBrands.length) continue;
+      var ambBrandData = brandData.filter(function(bd) { return a.matchedBrands.includes(bd.brand); });
+      if (!ambBrandData.length) continue;
+      var pptx = buildPptx(ambBrandData);
+      var b64 = await pptx.write({ outputType: 'base64' });
+      var blob = base64ToBlob(b64, 'application/vnd.openxmlformats-officedocument.presentationml.presentation');
+      var safeName = a.name.replace(/[^a-zA-Z0-9 ]/g, '').replace(/\s+/g, '_');
+      zip.file(safeName + '_Training.pptx', blob);
+    }
+    var zipBlob = await zip.generateAsync({ type: 'blob' });
+    var url = URL.createObjectURL(zipBlob);
+    var link = document.createElement('a');
+    link.href = url;
+    link.download = 'Training_All_Ambassadors_' + new Date().toISOString().slice(0, 10) + '.zip';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  } catch (err) {
+    alert('Error creating ZIP: ' + err.message);
+  }
+  btn.disabled = false; btn.textContent = 'Download All as ZIP';
+}
+
+async function sendAllEmails() {
+  var withEmail = ambassadorAssignments.filter(function(a) { return a.email; });
+  if (!withEmail.length) {
+    alert('No ambassadors have email addresses.');
+    return;
+  }
+
+  if (!confirm('Send training decks to ' + withEmail.length + ' ambassadors via email?\n\nThis will email each ambassador their personalized training slides.')) {
+    return;
+  }
+
+  var btn = document.getElementById('send-email-all');
+  btn.disabled = true; btn.textContent = 'Sending…';
+
+  var statusArea = document.getElementById('send-status-area');
+  statusArea.style.display = 'block';
+  statusArea.innerHTML = '<div style="font-size:12px;color:var(--text2);margin-bottom:8px;font-weight:600;">Sending Progress</div><div class="progress-bar-wrap"><div class="progress-bar-fill" id="send-progress" style="width:0%"></div></div>';
+
+  var sent = 0, failed = 0;
+  var total = withEmail.length;
+
+  for (var wi = 0; wi < withEmail.length; wi++) {
+    var a = withEmail[wi];
+    var rowId = 'sr_' + a.name.replace(/\W/g, '_');
+    statusArea.innerHTML += '<div class="send-row" id="' + rowId + '"><div class="send-icon">⏳</div><div class="send-name">' + a.name + '</div><div class="send-detail">' + a.email + '</div><div class="send-badge wait">Sending…</div></div>';
+
+    try {
+      var ambBrandData = brandData.filter(function(bd) { return a.matchedBrands.includes(bd.brand); });
+      if (!ambBrandData.length) throw new Error('No brand data for this ambassador');
+      var pptx = buildPptx(ambBrandData);
+      var b64 = await pptx.write({ outputType: 'base64' });
+
+      var resp = await fetch('/api/send', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({
+        to: a.email,
+        subject: 'Your Brand Training Materials — Grassroots Marketing',
+        html: '<div style="font-family:Arial,sans-serif;max-width:600px;"><h2 style="color:#2d6a4f;">Your Brand Training Deck</h2><p>Hi ' + a.name.split(' ')[0] + ',</p><p>Attached are your brand training materials for this month. You have <strong>' + a.matchedBrands.length + ' brand' + (a.matchedBrands.length > 1 ? 's' : '') + '</strong> to review:</p><ul>' + a.matchedBrands.map(function(b) { return '<li><strong>' + b + '</strong></li>'; }).join('') + '</ul><p>Please review these materials before your upcoming demos. Let us know if you have any questions!</p><p style="color:#666;font-size:12px;">— Grassroots Marketing Team</p></div>',
+        attachment: b64,
+        filename: a.name.replace(/[^a-zA-Z0-9 ]/g, '').replace(/\s+/g, '_') + '_Training.pptx'
+      })});
+
+      if (resp.ok) {
+        sent++;
+        var row = document.getElementById(rowId);
+        if (row) row.innerHTML = '<div class="send-icon">✅</div><div class="send-name">' + a.name + '</div><div class="send-detail">' + a.email + '</div><div class="send-badge ok">Sent</div>';
+      } else {
+        var errData = await resp.json();
+        throw new Error(errData.error || 'Send failed');
+      }
+    } catch (err) {
+      failed++;
+      var row2 = document.getElementById(rowId);
+      if (row2) row2.innerHTML = '<div class="send-icon">❌</div><div class="send-name">' + a.name + '</div><div class="send-detail">' + err.message + '</div><div class="send-badge fail">Failed</div>';
+    }
+
+    var pct = Math.round(((sent + failed) / total) * 100);
+    var prog = document.getElementById('send-progress');
+    if (prog) prog.style.width = pct + '%';
+  }
+
+  statusArea.innerHTML += '<div style="margin-top:12px;padding:12px;background:var(--glass2);border-radius:var(--r-sm);font-size:13px;color:var(--text1);">Done: <span style="color:var(--sage);">' + sent + ' sent</span>' + (failed ? ' · <span style="color:var(--ember);">' + failed + ' failed</span>' : '') + '</div>';
+  btn.disabled = false; btn.textContent = '✉ Email All Ambassadors';
+}
+</script>
+</body>
+</html>
